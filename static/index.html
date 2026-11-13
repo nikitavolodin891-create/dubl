@@ -1,0 +1,1066 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<title>Дубль — ИИ-режиссёр твоих рилсов</title>
+<meta name="description" content="Напиши ник Instagram: разберём рилсы, покажем слабые места и напишем три сценария в твоём стиле.">
+<style>
+
+  /* Как в ролике: светлый пудровый холст, белые карточки со скруглением 22px, пыльно-розовый акцент, крупные жирные цифры */
+  :root {
+    --bg: #F6EEEE;
+    --card: #FFFFFF;
+    --tint: #FAF5F5;
+    --line: rgba(60, 30, 36, .07);
+    --ink: #1E1719;
+    --soft: #8E8286;
+    --accent: #B8646F;
+    --accent-ink: #FFFFFF;
+    --accent-soft: #F5E2E4;
+    --good: #1B873F;
+    --good-bg: #E3F7EB;
+    --bad: #D92D2D;
+    --bad-bg: #FDE8E8;
+    --info: #7E3F49;
+    --info-bg: #F5E2E4;
+    --bar-neutral: #EBDDDF;
+    --shadow: 0 8px 24px rgba(90, 40, 50, .06);
+    --font: Onest, -apple-system, "SF Pro Display", system-ui, sans-serif;
+    color-scheme: light;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 var(--font); }
+  h1, h2, h3, p { margin: 0; }
+  h1, h2 { font-weight: 800; letter-spacing: -.03em; line-height: 1.08; text-wrap: balance; }
+  h1 { font-size: clamp(34px, 6.4vw, 58px); }
+  h2 { font-size: clamp(24px, 4vw, 34px); }
+  h3 { font-size: 18px; font-weight: 700; line-height: 1.3; letter-spacing: -.01em; }
+  a { color: inherit; }
+  button { font-family: inherit; }
+  :focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; border-radius: 8px; }
+  .hidden { display: none !important; }
+  [hidden] { display: none !important; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding-left: max(20px, env(safe-area-inset-left, 0px)); padding-right: max(20px, env(safe-area-inset-right, 0px)); }
+  .narrow { max-width: 680px; }
+  .soft { color: var(--soft); }
+  .small { font-size: 14px; }
+  .card-ish { background: var(--card); border: 1px solid var(--line); border-radius: 22px; box-shadow: var(--shadow); }
+
+  /* Шапка главной */
+  .bar { display: flex; align-items: center; gap: 9px; padding-block: 20px; font-size: 18px; font-weight: 800; letter-spacing: -.02em; }
+  .bar .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); }
+  .demo { background: var(--accent-soft); color: var(--ink); font-size: 14px; padding-block: 9px; padding-left: max(20px, env(safe-area-inset-left, 0px)); padding-right: max(20px, env(safe-area-inset-right, 0px)); text-align: center; }
+
+  /* Первый экран */
+  .hero { display: grid; grid-template-columns: minmax(0, 1fr); gap: 36px; padding-block: 20px 72px; align-items: center; }
+  .hero .lead { margin-top: 18px; font-size: 19px; color: var(--soft); max-width: 30em; }
+  @media (min-width: 860px) { .hero { grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); gap: 56px; padding-block: 48px 96px; } }
+  .start-card { background: var(--card); border: 1px solid var(--line); border-radius: 24px; padding: 22px; box-shadow: var(--shadow); }
+  .start-card label { display: block; font-size: 14px; color: var(--soft); margin-bottom: 8px; }
+  .field { display: flex; align-items: center; gap: 2px; background: var(--tint); border: 1.5px solid transparent; border-radius: 16px; padding: 0 16px; font-size: 19px; }
+  .field:focus-within { border-color: var(--accent); background: var(--card); }
+  .field b { color: var(--soft); font-weight: 500; }
+  .field input { flex: 1; min-width: 0; background: none; border: 0; outline: 0; font: inherit; color: var(--ink); padding: 15px 2px; }
+  .field input::placeholder { color: #BBAEB1; }
+  .btn { display: block; width: 100%; margin-top: 12px; min-height: 56px; border: 0; border-radius: 999px; background: var(--accent); color: var(--accent-ink); font-size: 16px; font-weight: 700; cursor: pointer; }
+  .btn:hover { filter: brightness(1.05); }
+  .btn:disabled { opacity: .55; cursor: default; }
+  .start-card .fine { margin-top: 12px; font-size: 13px; color: var(--soft); }
+  .error { margin-top: 12px; padding: 9px 14px; background: var(--bad-bg); color: var(--bad); border-radius: 12px; font-size: 15px; }
+
+  /* Разделы главной */
+  .section { padding-bottom: 80px; }
+  .section > h2 { margin-bottom: 28px; max-width: 18em; }
+  .inside { display: grid; grid-template-columns: minmax(0, 1fr); gap: 40px; }
+  @media (min-width: 860px) { .inside { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; align-items: start; } }
+  .inside h3 { margin-bottom: 6px; }
+  .inside > div > p { color: var(--soft); }
+  .inside .sample { margin-top: 16px; display: grid; gap: 10px; }
+  .sample-tag { display: block; margin-top: 16px; font-size: 14px; color: var(--soft); }
+  .next { padding-bottom: 80px; }
+  .next-card { background: var(--card); border: 1px solid var(--line); border-radius: 24px; padding: 32px 24px; box-shadow: var(--shadow); }
+  .next-card p { margin-top: 14px; max-width: 34em; color: var(--soft); }
+  .pill { display: inline-block; background: var(--accent-soft); color: var(--accent); border-radius: 999px; padding: 4px 12px; font-size: 13px; font-weight: 600; margin-bottom: 14px; }
+  .faq { max-width: 680px; background: var(--card); border: 1px solid var(--line); border-radius: 22px; padding: 4px 22px; box-shadow: var(--shadow); }
+  .faq details + details { border-top: 1px solid var(--line); }
+  .faq summary { cursor: pointer; padding: 16px 30px 16px 0; font-weight: 600; list-style: none; position: relative; }
+  .faq summary::-webkit-details-marker { display: none; }
+  .faq summary::after { content: "+"; position: absolute; right: 2px; top: 10px; font-size: 26px; font-weight: 400; color: var(--accent); }
+  .faq details[open] summary::after { content: "−"; }
+  .faq details p { padding: 0 0 18px; max-width: 36em; color: var(--soft); }
+  footer { padding-block: 28px 40px; font-size: 14px; color: var(--soft); }
+
+  /* Экран ожидания */
+  .wait { padding-block: 28px 96px; }
+  .wait .lead { margin-top: 14px; color: var(--soft); }
+  .steps { list-style: none; padding: 6px 22px; margin: 30px 0 0; background: var(--card); border: 1px solid var(--line); border-radius: 22px; box-shadow: var(--shadow); color: var(--soft); }
+  .steps li { display: flex; gap: 14px; align-items: center; padding: 14px 0; }
+  .steps li + li { border-top: 1px solid var(--line); }
+  .steps i { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--bar-neutral); flex: none; }
+  .steps .ok { color: var(--ink); }
+  .steps .ok i { background: var(--good); border-color: var(--good); }
+  .steps .now { color: var(--ink); font-weight: 600; }
+  .steps .now i { background: var(--accent); border-color: var(--accent); animation: pulse 1s ease-in-out infinite alternate; }
+  @keyframes pulse { to { opacity: .3; } }
+
+  /* Окно приложения, как на ноутбуке в ролике */
+  .app { padding-block: 16px 24px; max-width: 1280px; }
+  .window { background: rgba(255, 255, 255, .45); border: 1px solid var(--line); border-radius: 26px; box-shadow: 0 30px 60px -30px rgba(90, 40, 50, .22); }
+  .titlebar { display: flex; align-items: center; gap: 14px; padding: 12px 16px; border-bottom: 1px solid var(--line); }
+  .lights { display: flex; gap: 7px; flex: none; }
+  .lights i { width: 12px; height: 12px; border-radius: 50%; background: #FF5F57; }
+  .lights i:nth-child(2) { background: #FEBC2E; }
+  .lights i:nth-child(3) { background: #28C840; }
+  .wname { font-weight: 700; }
+  .status { display: inline-flex; align-items: center; gap: 7px; margin-inline: auto; background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 5px 12px; font-size: 13px; color: var(--soft); white-space: nowrap; }
+  .status i { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
+  .other { flex: none; background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 6px 13px; font-size: 13px; color: var(--ink); cursor: pointer; }
+  @media (max-width: 620px) { .wname { display: none; } .titlebar { gap: 10px; padding: 10px 12px; } .status { margin-inline: 0 auto; } .status .sl { display: none; } .lights i { width: 10px; height: 10px; } .dash { padding: 12px; } .widget, .script { padding: 16px; } }
+
+  .dash { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; padding: 16px; }
+  .board { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-content: start; align-items: start; }
+  .widget { background: var(--card); border: 1px solid var(--line); border-radius: 22px; padding: 20px; box-shadow: var(--shadow); }
+  .whead { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+  .wmeta { font-size: 13px; color: var(--soft); white-space: nowrap; }
+  .appear { animation: rise .5s cubic-bezier(.2, .8, .2, 1) both; }
+  @keyframes rise { from { opacity: 0; transform: translateY(18px); } }
+  .board .fresh { outline: 2px solid var(--accent); outline-offset: 3px; }
+  .handle { font-size: clamp(26px, 5vw, 36px); font-weight: 800; letter-spacing: -.03em; line-height: 1.1; overflow-wrap: anywhere; }
+  .niche { display: inline-block; background: var(--accent-soft); color: var(--accent); border-radius: 999px; padding: 4px 12px; font-size: 13px; font-weight: 600; margin: 10px 0 12px; }
+  .widget .fineprint { margin-top: 14px; font-size: 13px; color: var(--soft); }
+
+  /* Крупные цифры с плашками «выше / ниже обычного» */
+  .kpis { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 16px; }
+  @media (min-width: 700px) { .kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+  .kpi .k { display: block; font-size: 13px; color: var(--soft); }
+  .kpi b { display: block; font-size: clamp(30px, 4.4vw, 40px); font-weight: 800; letter-spacing: -.04em; line-height: 1.1; margin-top: 4px; font-variant-numeric: tabular-nums; }
+  .badge { display: inline-block; margin-top: 6px; border-radius: 999px; padding: 3px 10px; font-size: 12px; font-weight: 600; }
+  .badge.good { background: var(--good-bg); color: var(--good); }
+  .badge.bad { background: var(--bad-bg); color: var(--bad); }
+  .footnote { margin-top: 18px; background: var(--tint); border-radius: 14px; padding: 11px 14px; font-size: 14px; }
+
+  .chart { background: var(--card); border: 1px solid var(--line); border-radius: 22px; padding: 18px; box-shadow: var(--shadow); }
+  .widget .chart { padding: 0; border: 0; box-shadow: none; border-radius: 0; }
+  .bars { position: relative; display: flex; align-items: flex-end; gap: 4px; height: 140px; margin-top: 14px; }
+  .bars .b { flex: 1; min-height: 3px; background: var(--bar-neutral); border-radius: 6px 6px 2px 2px; display: block; }
+  .bars .b.hit { background: var(--good); }
+  .bars .b.low { background: var(--bad); }
+  .bars .median { position: absolute; left: 0; right: 0; border-top: 2px dashed var(--ink); opacity: .35; }
+  .legend { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-top: 12px; font-size: 13px; color: var(--soft); }
+  .legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; background: var(--c); vertical-align: -1px; }
+  .legend .mid::before { width: 12px; height: 0; border-top: 2px dashed var(--soft); background: none; vertical-align: 4px; border-radius: 0; }
+
+  .finding { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 14px 16px; box-shadow: var(--shadow); }
+  .finding + .finding { margin-top: 10px; }
+  .finding h3 { font-size: 16px; display: flex; gap: 10px; align-items: baseline; }
+  .finding h3::before { content: ""; flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--mark, var(--accent)); transform: translateY(-1px); }
+  .finding.good { --mark: var(--good); }
+  .finding.bad { --mark: var(--bad); }
+  .finding p { margin-top: 6px; color: var(--soft); font-size: 15px; }
+  .widget .finding { background: var(--tint); border-color: transparent; box-shadow: none; }
+  .refs { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 6px; }
+  .ref { font-size: 12px; font-weight: 600; background: var(--tint); border-radius: 999px; padding: 3px 10px; text-decoration: none; font-variant-numeric: tabular-nums; }
+  .widget .finding .ref { background: var(--card); }
+  a.ref:hover { color: var(--accent); }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+  .chips span { background: var(--tint); border-radius: 999px; padding: 4px 12px; font-size: 14px; }
+
+  .info { background: var(--info-bg); color: var(--info); border-radius: 16px; padding: 14px 16px; font-weight: 500; }
+  .note-list { margin: 12px 0 0; padding: 0; list-style: none; }
+  .note-list li { position: relative; padding: 10px 0 10px 22px; }
+  .note-list li + li { border-top: 1px solid var(--line); }
+  .note-list li::before { content: ""; position: absolute; left: 2px; top: 19px; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+
+  /* Сценарий */
+  .script { background: var(--card); border: 1px solid var(--line); border-radius: 22px; padding: 20px; box-shadow: var(--shadow); }
+  .meta { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 13px; color: var(--soft); }
+  .meta b { color: var(--ink); font-size: 16px; font-weight: 700; margin-right: 6px; }
+  .meta span { background: var(--tint); border-radius: 999px; padding: 3px 10px; }
+  .meta .score { background: var(--good-bg); color: var(--good); font-weight: 600; }
+  .hook-box { margin: 14px 0 10px; background: var(--accent-soft); border-radius: 16px; padding: 14px 16px; }
+  .hook { font-size: 20px; font-weight: 800; letter-spacing: -.02em; line-height: 1.3; }
+  .why { font-size: 15px; color: var(--soft); }
+  .beats { margin: 14px 0 0; padding: 0; list-style: none; }
+  .beats li { display: grid; grid-template-columns: 54px minmax(0, 1fr); gap: 10px; padding: 12px 0; border-top: 1px solid var(--line); }
+  .beats .t { font-size: 14px; font-weight: 700; color: var(--accent); padding-top: 1px; font-variant-numeric: tabular-nums; }
+  .beats .do { font-size: 14px; color: var(--soft); margin-top: 4px; }
+  .caption { background: var(--tint); border-radius: 14px; padding: 12px 14px; margin-top: 14px; font-size: 15px; white-space: pre-line; }
+  .copy { background: var(--ink); color: var(--card); border: 0; border-radius: 999px; padding: 10px 16px; margin-top: 12px; font-size: 14px; font-weight: 600; cursor: pointer; }
+
+  /* Чат: история разговоров, сообщения, поле ввода */
+  .chat { position: relative; display: flex; flex-direction: column; background: var(--card); border: 1px solid var(--line); border-radius: 22px; box-shadow: var(--shadow); height: calc(100dvh - 170px); min-height: 480px; overflow: hidden; }
+  .chat-top { display: flex; align-items: center; gap: 6px; padding: 10px 10px 10px 16px; border-bottom: 1px solid var(--line); }
+  .chat-title { flex: 1; min-width: 0; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .icon-btn { flex: none; display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 12px; border: 1px solid var(--line); background: var(--card); border-radius: 999px; font-size: 14px; color: var(--ink); cursor: pointer; }
+  .icon-btn:hover { background: var(--tint); }
+  .icon-btn svg { width: 16px; height: 16px; }
+
+  .thread { flex: 1; overflow-y: auto; padding: 20px 18px; display: flex; flex-direction: column; gap: 20px; scroll-behavior: smooth; }
+  .m-ai { display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 10px; }
+  .avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--accent-soft); display: grid; place-items: center; }
+  .avatar::after { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--accent); }
+  .m-head { display: flex; gap: 8px; align-items: baseline; font-size: 13px; }
+  .m-head b { font-weight: 700; }
+  .m-head time { color: var(--soft); }
+  .m-txt { margin-top: 2px; font-size: 15.5px; line-height: 1.55; white-space: pre-line; overflow-wrap: anywhere; }
+  .m-txt.err { color: var(--bad); }
+  .shown { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 10px; font-size: 13px; color: var(--soft); }
+  .shown button { border: 1px solid var(--line); background: var(--tint); border-radius: 999px; padding: 4px 11px; font-size: 13px; color: var(--ink); cursor: pointer; }
+  .shown button:hover { border-color: var(--accent); color: var(--accent); }
+  .m-me { align-self: flex-end; max-width: 85%; background: var(--accent-soft); border-radius: 18px 18px 6px 18px; padding: 10px 14px; font-size: 15.5px; line-height: 1.45; overflow-wrap: anywhere; white-space: pre-line; }
+  .typing { display: inline-flex; gap: 4px; padding: 8px 0 2px; }
+  .typing i { width: 7px; height: 7px; border-radius: 50%; background: var(--soft); opacity: .35; animation: blink 1.2s infinite; }
+  .typing i:nth-child(2) { animation-delay: .2s; }
+  .typing i:nth-child(3) { animation-delay: .4s; }
+  @keyframes blink { 30% { opacity: 1; transform: translateY(-2px); } }
+
+  .empty { margin: auto 0; display: grid; gap: 16px; }
+  .empty .hello { text-align: center; }
+  .empty .hello .avatar { width: 44px; height: 44px; margin: 0 auto 10px; }
+  .empty .hello .avatar::after { width: 14px; height: 14px; }
+  .empty .hello p { color: var(--soft); margin-top: 4px; font-size: 15px; }
+  .sugs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .sug { text-align: left; border: 1px solid var(--line); background: var(--card); border-radius: 16px; padding: 12px; cursor: pointer; color: var(--ink); }
+  .sug:hover { border-color: var(--accent); background: var(--tint); }
+  .sug b { display: block; font-size: 14px; }
+  .sug span { display: block; font-size: 13px; color: var(--soft); margin-top: 2px; line-height: 1.35; }
+
+  .composer { display: flex; align-items: flex-end; gap: 8px; margin: 0 12px 12px; padding: 6px 6px 6px 16px; border: 1.5px solid var(--line); border-radius: 24px; background: var(--card); }
+  .composer:focus-within { border-color: var(--accent); }
+  .composer textarea { flex: 1; min-width: 0; border: 0; outline: 0; resize: none; background: none; font: inherit; font-size: 15.5px; line-height: 1.45; color: var(--ink); padding: 8px 0; max-height: 140px; }
+  .composer textarea::placeholder { color: #B3A7AA; }
+  .send { flex: none; width: 40px; height: 40px; border: 0; border-radius: 50%; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; cursor: pointer; }
+  .send svg { width: 18px; height: 18px; }
+  .send:disabled { opacity: .4; cursor: default; }
+  .mic { flex: none; width: 40px; height: 40px; border: 1.5px solid var(--line); border-radius: 50%; background: var(--card); color: var(--ink); display: grid; place-items: center; cursor: pointer; }
+  .mic svg { width: 18px; height: 18px; }
+  .mic.on { background: var(--bad); border-color: var(--bad); color: #fff; animation: pulse 1s ease-in-out infinite alternate; }
+  .icon-btn.active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+  .status.busy i { animation: pulse .7s ease-in-out infinite alternate; }
+
+  .hist { position: absolute; inset: 0; z-index: 3; background: var(--card); display: flex; flex-direction: column; }
+  .hist[hidden] { display: none; }
+  .hist-top { display: flex; align-items: center; justify-content: space-between; padding: 10px 10px 10px 16px; border-bottom: 1px solid var(--line); }
+  .hist-list { flex: 1; overflow-y: auto; padding: 8px; }
+  .hist-group { font-size: 13px; color: var(--soft); padding: 12px 10px 4px; }
+  .hist-item { display: block; width: 100%; text-align: left; border: 0; background: none; border-radius: 14px; padding: 10px 12px; cursor: pointer; color: var(--ink); }
+  .hist-item:hover { background: var(--tint); }
+  .hist-item.cur { background: var(--accent-soft); }
+  .hist-item b { display: block; font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .hist-item span { font-size: 13px; color: var(--soft); }
+  .hist-empty { padding: 24px 12px; color: var(--soft); text-align: center; }
+
+  /* На телефоне: вкладки «Разговор» и «Экран» вместо двух колонок */
+  .tabs { display: flex; gap: 4px; background: var(--tint); border-radius: 999px; padding: 4px; }
+  .tabs button { flex: 1; border: 0; background: none; border-radius: 999px; padding: 8px 12px; font-size: 14px; font-weight: 600; color: var(--soft); cursor: pointer; position: relative; }
+  .tabs button[aria-selected="true"] { background: var(--card); color: var(--ink); box-shadow: var(--shadow); }
+  .tabs .count { display: inline-grid; place-items: center; min-width: 18px; height: 18px; margin-left: 6px; border-radius: 999px; background: var(--accent); color: var(--accent-ink); font-size: 11px; padding: 0 5px; }
+  @media (max-width: 899px) {
+    .dash[data-pane="chat"] .board { display: none; }
+    .dash[data-pane="board"] .chat { display: none; }
+  }
+  @media (min-width: 900px) {
+    .tabs { display: none; }
+    .dash { grid-template-columns: minmax(0, 1fr) 400px; gap: 18px; padding: 18px; align-items: start; }
+    .dash .chat { order: 2; }
+    .chat { position: sticky; top: calc(16px + env(safe-area-inset-top, 0px)); height: calc(100vh - 140px); }
+    .board { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .board .w2 { grid-column: span 2; }
+  }
+  @media (max-width: 460px) { .icon-btn .lbl { display: none; } .icon-btn { padding: 0 10px; } }
+  .board .flash { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+  /* Сцена разговора: большой круг, как голосовой помощник в ролике */
+  .stage { display: grid; justify-items: center; gap: 10px; padding: 22px 18px 18px; border-bottom: 1px solid var(--line); text-align: center; }
+  .orb { position: relative; width: 92px; height: 92px; border-radius: 50%; border: 0; background: var(--accent); cursor: pointer; display: grid; place-items: center; box-shadow: 0 0 0 10px var(--accent-soft); transition: box-shadow .25s, transform .25s; }
+  .orb:hover { transform: scale(1.03); }
+  .orb svg { width: 34px; height: 34px; color: var(--accent-ink); }
+  .orb .eq { display: none; gap: 5px; align-items: center; height: 34px; }
+  .orb .eq i { width: 6px; height: 12px; border-radius: 3px; background: var(--accent-ink); }
+  .stage.listen .orb { box-shadow: 0 0 0 10px var(--accent-soft), 0 0 0 22px rgba(184, 100, 111, .16); animation: breathe 1.1s ease-in-out infinite alternate; }
+  .stage.think .orb { opacity: .7; animation: breathe .6s ease-in-out infinite alternate; }
+  .stage.speak .orb svg { display: none; }
+  .stage.speak .orb .eq { display: flex; }
+  .stage.speak .orb .eq i { animation: eq .5s ease-in-out infinite alternate; }
+  .stage.speak .orb .eq i:nth-child(2) { animation-delay: .15s; }
+  .stage.speak .orb .eq i:nth-child(3) { animation-delay: .3s; }
+  @keyframes breathe { to { transform: scale(1.07); } }
+  @keyframes eq { to { height: 30px; } }
+  .stage-text { font-weight: 700; font-size: 16px; }
+  .stage-hint { font-size: 13px; color: var(--soft); }
+  .stage-hint kbd { font: inherit; font-weight: 600; background: var(--tint); border: 1px solid var(--line); border-radius: 6px; padding: 1px 7px; color: var(--ink); }
+  .stage-live { min-height: 22px; font-size: 15px; color: var(--ink); max-width: 100%; overflow-wrap: anywhere; }
+  .voice .empty .hello { display: none; }
+  .voice .thread { padding-top: 14px; gap: 14px; }
+  @media (prefers-reduced-motion: reduce) { .stage .orb, .stage .orb .eq i { animation: none !important; } }
+  .follow { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+  .follow button { border: 1px solid var(--accent); background: var(--card); color: var(--accent); border-radius: 999px; padding: 6px 12px; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .follow button:hover { background: var(--accent-soft); }
+  .fbars { display: flex; align-items: flex-end; gap: 5px; height: 120px; }
+  .fbars div { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 4px; height: 100%; }
+  .fbars i { display: block; width: 100%; background: var(--accent-soft); border-radius: 6px 6px 2px 2px; min-height: 3px; }
+  .fbars .wk i { background: var(--accent); }
+  .fbars span { font-size: 11px; color: var(--soft); font-variant-numeric: tabular-nums; }
+  .faxis { display: flex; justify-content: space-between; margin-top: 8px; font-size: 12px; color: var(--soft); }
+  .table-wrap { overflow-x: auto; margin: 0 -4px; }
+  table.ret { width: 100%; border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; min-width: 520px; }
+  .ret th { text-align: right; font-weight: 500; font-size: 12px; color: var(--soft); padding: 6px 8px; border-bottom: 1px solid var(--line); }
+  .ret td { text-align: right; padding: 9px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  .ret th:nth-child(2), .ret td:nth-child(2) { text-align: left; white-space: normal; max-width: 220px; }
+  .ret th:first-child, .ret td:first-child { text-align: left; }
+  .ret td a { text-decoration: none; font-weight: 600; }
+  .ret .hook-cell { color: var(--soft); font-size: 13px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  .ret .pill-good, .ret .pill-bad { display: inline-block; border-radius: 999px; padding: 1px 8px; font-weight: 600; }
+  .ret .pill-good { background: var(--good-bg); color: var(--good); }
+  .ret .pill-bad { background: var(--bad-bg); color: var(--bad); }
+  @media (prefers-reduced-motion: reduce) { .steps .now i, .appear, .typing i { animation: none; } .thread { scroll-behavior: auto; } }
+</style>
+</head>
+<body>
+<div id="demo-banner" class="demo hidden">Демо-режим: показываем выдуманный пример, настоящий аккаунт не разбирается.</div>
+<header class="wrap bar" id="bar"><span class="dot"></span>Дубль</header>
+
+<main>
+  <div id="start">
+    <section class="wrap hero">
+      <div>
+        <h1>Почему твои рилсы не залетают?</h1>
+        <p class="lead">Напиши ник. За пару минут разберём твои ролики, покажем слабые места и напишем три сценария в твоём стиле.</p>
+      </div>
+      <form class="start-card" id="form">
+        <label for="nick">Ник в Instagram</label>
+        <div class="field"><b>@</b><input id="nick" name="nick" placeholder="твой_ник" autocomplete="off" autocapitalize="none" spellcheck="false" required></div>
+        <button class="btn" id="go">Разобрать аккаунт</button>
+        <p id="error" class="error hidden" role="alert"></p>
+        <p class="fine">Пароль не нужен. Работает с открытыми аккаунтами.</p>
+      </form>
+    </section>
+
+    <section class="wrap section">
+      <h2>Что будет в разборе</h2>
+      <div class="inside">
+        <div><h3>Цифры без догадок</h3><p>Сколько набирает обычный ролик, какие залетели и какие провалились.</p><div class="sample" id="sample-chart"></div></div>
+        <div><h3>Что работает и что тянет вниз</h3><p>Сравниваем сильные и слабые ролики: хуки, длину, темы, манеру речи.</p><div class="sample" id="sample-finding"></div></div>
+        <div><h3>Три сценария под тебя</h3><p>Хук, реплики по секундам, что делать в кадре и подпись к посту.</p><div class="sample" id="sample-script"></div></div>
+      </div>
+      <span class="sample-tag">это примеры, у тебя будут свои</span>
+    </section>
+
+    <section class="wrap next">
+      <div class="next-card">
+        <span class="pill">Скоро</span>
+        <h2>Съёмка с режиссёром</h2>
+        <p>Ставишь телефон, читаешь сценарий с суфлёра прямо на сайте. После дубля получаешь разбор: темп, слова-паразиты, взгляд в камеру, свет, и что переснять.</p>
+      </div>
+    </section>
+
+    <section class="wrap section">
+      <h2>Частые вопросы</h2>
+      <div class="faq">
+        <details><summary>Нужно ли давать пароль от Instagram?</summary><p>Нет. Мы смотрим только то, что видно любому посетителю твоего профиля.</p></details>
+        <details><summary>У меня закрытый аккаунт. Получится?</summary><p>Нет, закрытые аккаунты разобрать нельзя. Открой профиль на время разбора или попробуй позже.</p></details>
+        <details><summary>Откуда вы знаете, почему ролик не залетел?</summary><p>Досмотры и репосты Instagram посторонним не показывает. Мы сравниваем твои сильные и слабые ролики между собой и показываем, чем они отличаются.</p></details>
+        <details><summary>Сколько ждать?</summary><p>Обычно 2–4 минуты: нужно собрать ролики и послушать, как ты в них говоришь.</p></details>
+      </div>
+    </section>
+  </div>
+
+  <section id="progress" class="wrap narrow wait hidden" aria-live="polite">
+    <h1 id="progress-title"></h1>
+    <p class="lead">Обычно это занимает 2–4 минуты. Страницу не закрывай.</p>
+    <ul class="steps" id="steps"></ul>
+  </section>
+
+  <section id="dash" class="wrap app hidden">
+    <div class="window">
+      <div class="titlebar">
+        <span class="lights" aria-hidden="true"><i></i><i></i><i></i></span>
+        <span class="wname">Дубль</span>
+        <span class="status" id="status"><i></i><span class="sl">Режиссёр </span><span id="status-text">на связи</span></span>
+        <button class="other" id="other" type="button">Другой аккаунт</button>
+      </div>
+      <div class="dash" id="dash-grid" data-pane="chat">
+        <div class="tabs" role="tablist" aria-label="Что показать">
+          <button type="button" role="tab" id="tab-chat" aria-selected="true">Разговор</button>
+          <button type="button" role="tab" id="tab-board" aria-selected="false">Экран<span class="count hidden" id="tab-count"></span></button>
+        </div>
+        <aside class="chat" aria-label="Разговор с режиссёром">
+          <div class="chat-top">
+            <span class="chat-title" id="chat-title">Новый разговор</span>
+            <button class="icon-btn" type="button" id="open-hist" aria-label="История разговоров">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/></svg><span class="lbl">История</span>
+            </button>
+            <button class="icon-btn" type="button" id="voice-out" aria-pressed="false" aria-label="Озвучивать ответы" hidden>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>
+            </button>
+            <button class="icon-btn" type="button" id="new-chat" aria-label="Новый разговор">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span class="lbl">Новый чат</span>
+            </button>
+          </div>
+          <div class="stage" id="stage" hidden>
+            <button class="orb" id="orb" type="button" aria-label="Говорить с режиссёром">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
+              <span class="eq" aria-hidden="true"><i></i><i></i><i></i></span>
+            </button>
+            <div class="stage-text" id="stage-text">Режиссёр на связи</div>
+            <div class="stage-hint" id="stage-hint">Нажми <kbd>пробел</kbd> или на круг и говори</div>
+            <div class="stage-live" id="stage-live" aria-live="polite"></div>
+          </div>
+          <div class="thread" id="thread" aria-live="polite"></div>
+          <form class="composer" id="ask">
+            <textarea id="q" rows="1" placeholder="Или напиши текстом" maxlength="500" aria-label="Вопрос режиссёру"></textarea>
+            <button class="send" id="send" aria-label="Отправить" disabled>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+            </button>
+          </form>
+          <div class="hist" id="hist" hidden>
+            <div class="hist-top"><b>История разговоров</b><button class="icon-btn" type="button" id="close-hist">Закрыть</button></div>
+            <div class="hist-list" id="hist-list"></div>
+          </div>
+        </aside>
+        <div class="board" id="board"></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="wrap" id="footer">Дубль — ИИ-режиссёр твоих рилсов</footer>
+
+<script>
+const STEPS = [
+  ["collect", "Собираем рилсы"],
+  ["numbers", "Считаем цифры"],
+  ["speech", "Слушаем, как ты говоришь"],
+  ["analysis", "Ищем, что работает и что нет"],
+  ["scripts", "Пишем сценарии: 10 идей, оставляем 3"],
+];
+const $ = (id) => document.getElementById(id);
+
+// Весь текст вставляем через textContent, чтобы чужие данные не могли сломать страницу
+function el(tag, cls, text) {
+  const node = document.createElement(tag);
+  if (cls) node.className = cls;
+  if (text !== undefined && text !== null) node.textContent = text;
+  return node;
+}
+function add(parent, ...kids) { kids.forEach((k) => k && parent.appendChild(k)); return parent; }
+function num(n) {
+  if (n == null) return "—";
+  if (n >= 1e6) return (n / 1e6).toFixed(1).replace(".0", "").replace(".", ",") + " млн";
+  if (n >= 1e4) return Math.round(n / 1e3) + " тыс";
+  return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+}
+const comma = (x) => String(x).replace(".", ",");
+const isReel = (url) => typeof url === "string" && url.startsWith("https://www.instagram.com/");
+
+function show(id) {
+  ["start", "progress", "dash"].forEach((s) => $(s).classList.toggle("hidden", s !== id));
+  $("bar").classList.toggle("hidden", id === "dash");
+  $("footer").classList.toggle("hidden", id === "dash");
+  window.scrollTo(0, 0);
+}
+function fail(message) {
+  show("start");
+  $("error").textContent = message;
+  $("error").classList.remove("hidden");
+  $("go").disabled = false;
+}
+
+/* ---------- Кусочки отчёта (они же — примеры на главной) ---------- */
+
+function chartNode(reels, medianViews, caption) {
+  const chart = el("div", "chart");
+  if (caption) add(chart, el("div", "small soft", caption));
+  const bars = el("div", "bars");
+  const max = Math.max(...reels.map((r) => r.views), 1);
+  [...reels].reverse().forEach((r) => {
+    const bar = el(isReel(r.url) ? "a" : "div", "b" + (r.ratio >= 1.5 ? " hit" : r.ratio <= 0.6 ? " low" : ""));
+    bar.style.height = Math.max(2, (r.views / max) * 100) + "%";
+    bar.title = "№" + r.n + ", " + num(r.views) + " просмотров";
+    if (isReel(r.url)) { bar.href = r.url; bar.target = "_blank"; bar.rel = "noopener"; bar.setAttribute("aria-label", bar.title); }
+    bars.appendChild(bar);
+  });
+  const median = el("div", "median");
+  median.style.bottom = (medianViews / max) * 100 + "%";
+  bars.appendChild(median);
+  const legend = el("div", "legend");
+  const hit = el("span", "", "залетели"); hit.style.setProperty("--c", "var(--good)");
+  const low = el("span", "", "провалились"); low.style.setProperty("--c", "var(--bad)");
+  add(legend, hit, low, el("span", "mid", "обычный ролик"));
+  return add(chart, bars, legend);
+}
+
+function refsNode(numbers, reels) {
+  if (!Array.isArray(numbers) || !numbers.length) return null;
+  const box = el("div", "refs");
+  numbers.forEach((n) => {
+    const reel = reels.find((x) => x.n === n);
+    if (!reel) return;
+    const ref = el(isReel(reel.url) ? "a" : "span", "ref", "№" + n + ", " + num(reel.views));
+    if (isReel(reel.url)) { ref.href = reel.url; ref.target = "_blank"; ref.rel = "noopener"; }
+    box.appendChild(ref);
+  });
+  return box.childNodes.length ? box : null;
+}
+
+function findingNode(item, cls, reels) {
+  return add(el("div", "finding " + cls), el("h3", "", item.title), el("p", "", item.why), refsNode(item.reels, reels));
+}
+
+function scriptNode(sc, label, withCaption) {
+  const card = el("article", "script");
+  const body = card;
+  const meta = el("div", "meta");
+  add(meta, el("b", "", label), sc.mechanic ? el("span", "", sc.mechanic) : null,
+    sc.duration_sec ? el("span", "", sc.duration_sec + " сек") : null,
+    sc.score != null ? el("span", "score", sc.score + " из 100") : null);
+  add(body, meta, add(el("div", "hook-box"), el("p", "hook", sc.hook)), sc.why ? el("p", "why", sc.why) : null);
+  const beats = el("ol", "beats");
+  (sc.beats || []).forEach((b) => {
+    beats.appendChild(add(el("li"), el("div", "t", b.t), add(el("div"), el("div", "", b.say), b.do ? el("div", "do", b.do) : null)));
+  });
+  add(body, beats);
+  if (withCaption && sc.caption) {
+    const copy = el("button", "copy", "Скопировать подпись");
+    copy.type = "button";
+    copy.addEventListener("click", async () => {
+      try { await navigator.clipboard.writeText(sc.caption); copy.textContent = "Подпись скопирована"; }
+      catch { copy.textContent = "Не получилось скопировать"; }
+      setTimeout(() => (copy.textContent = "Скопировать подпись"), 2000);
+    });
+    add(body, el("div", "caption", sc.caption), copy);
+  }
+  return card;
+}
+
+/* ---------- Примеры на главной ---------- */
+
+(function samples() {
+  const views = [4200, 61800, 8900, 27400, 5100, 112000, 9700, 33900, 6800, 12400, 7300, 48200];
+  const reels = views.map((v, i) => ({ n: i + 1, views: v, ratio: v / 11050, url: "" }));
+  add($("sample-chart"), chartNode(reels, 11050, "Просмотры 12 рилсов, слева старые"));
+  add($("sample-finding"),
+    findingNode({ title: "Хук — прямое обращение к боли", why: "Три самых сильных ролика начинаются с фразы про зрителя, а не про тебя.", reels: [6, 2, 12] }, "good", reels),
+    findingNode({ title: "Приветствие в первые секунды", why: "Ролики, которые открываются словом «привет», набирают меньше обычного.", reels: [1, 5, 11] }, "bad", reels));
+  add($("sample-script"), scriptNode({
+    mechanic: "Вопрос в боль", duration_sec: 26,
+    hook: "Ты не жадная. Тебя просто никто не учил брать.",
+    beats: [
+      { t: "0–2", say: "Ты не жадная. Тебя просто никто не учил брать.", do: "Крупный план, пауза после первой фразы" },
+      { t: "2–8", say: "Если тебе неловко назвать цену — это не про деньги.", do: "Текст на экране: «неловко назвать цену?»" },
+    ],
+  }, "Сценарий 1", false));
+})();
+
+/* ---------- Запуск разбора ---------- */
+
+fetch("/api/config").then((r) => r.json()).then((c) => { if (c.demo) $("demo-banner").classList.remove("hidden"); }).catch(() => {});
+
+$("form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  $("error").classList.add("hidden");
+  $("go").disabled = true;
+  try {
+    const r = await fetch("/api/analyze", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username: $("nick").value }),
+    });
+    const data = await r.json();
+    if (!r.ok) return fail(data.detail || "Не получилось запустить разбор. Попробуй ещё раз.");
+    $("progress-title").textContent = "Разбираем @" + $("nick").value.trim().replace(/^@/, "");
+    stepsNow = STEPS;
+    renderSteps("collect");
+    show("progress");
+    poll(data.job_id);
+  } catch { fail("Нет связи с сервером. Проверь интернет и нажми ещё раз."); }
+});
+
+let stepsNow = STEPS;
+function renderSteps(current) {
+  const idx = stepsNow.findIndex((s) => s[0] === current);
+  $("steps").replaceChildren(...stepsNow.map(([, label], i) =>
+    add(el("li", i < idx ? "ok" : i === idx ? "now" : ""), el("i"), el("span", "", label))));
+}
+
+async function poll(jobId) {
+  try {
+    const r = await fetch("/api/jobs/" + jobId);
+    const job = await r.json();
+    if (!r.ok) return fail(job.detail || "Разбор потерялся. Запусти его заново.");
+    if (job.status === "error") return fail(job.error);
+    if (job.status === "done") {
+      renderDash(job.result);
+      $("go").disabled = false;
+          return show("dash");
+    }
+    if (Array.isArray(job.steps)) stepsNow = job.steps;
+    renderSteps(job.step);
+    setTimeout(() => poll(jobId), 1500);
+  } catch { setTimeout(() => poll(jobId), 3000); }
+}
+
+/* ---------- Личный экран: чат слева, карточки справа ---------- */
+
+let D = null;          // результат разбора
+let convs = [];        // все разговоры по этому аккаунту
+let cur = null;        // открытый разговор
+let busy = false;
+let unseen = 0;        // новые карточки, которые на телефоне ещё не видели
+const SUGGEST = [
+  ["Что снять сегодня?", "тема и готовый текст"],
+  ["Дай сценарий", "хук, реплики, подпись"],
+  ["Как растут подписчики?", "по дням и за неделю"],
+  ["Почему пролистывают?", "где теряешь зрителей"],
+];
+const FINDINGS = { works: ["Что работает", "good"], fails: ["Что тянет вниз", "bad"], missing: ["Чего не хватает", ""] };
+
+function widget(title, cls, meta) {
+  const w = el("section", "widget" + (cls ? " " + cls : ""));
+  if (title) w.appendChild(add(el("div", "whead"), el("h3", "", title), meta ? el("span", "wmeta", meta) : null));
+  return w;
+}
+function introWidget() {
+  const a = D.analysis || {}, s = D.stats;
+  const example = D.demo ? el("p", "info", D.demo_note || ("Это выдуманный пример, а не разбор @" + D.username +
+    ". Цифры одинаковые для любого ника. Настоящий разбор заработает, когда сайт запустим на сервере с ключами.")) : null;
+  if (example) example.style.marginBottom = "14px";
+  return add(widget("", "w2"), example, el("div", "handle", "@" + D.username), a.niche ? el("div", "niche", a.niche) : null,
+    el("p", "", a.summary),
+    el("p", "fineprint", s.followers != null
+      ? "Разбор сделан по внутренней статистике Instagram: просмотры, пролистывания, досмотры, репосты, сохранения и новые подписчики."
+      : "Разбор сделан по открытым данным" + (s.transcribed ? " и речи из " + s.transcribed + " роликов" : ": просмотрам, лайкам, комментариям и подписям") +
+        ". Досмотров и репостов Instagram посторонним не показывает, поэтому причины — это выводы из сравнения сильных и слабых роликов."));
+}
+function statsWidget() {
+  const s = D.stats, reels = D.reels || [];
+  const kpi = (label, value, badge, kind) =>
+    add(el("div", "kpi"), el("span", "k", label), el("b", "", value), badge ? el("span", "badge " + kind, badge) : null);
+  const facts = [];
+  if (s.reels_per_week != null) {
+    const w = s.reels_per_week >= 5 ? Math.round(s.reels_per_week) : s.reels_per_week;
+    const n = Math.round(w), word = Number.isInteger(w) ? (n % 10 === 1 && n % 100 !== 11 ? "рилс" : [2, 3, 4].includes(n % 10) && ![12, 13, 14].includes(n % 100) ? "рилса" : "рилсов") : "рилса";
+    facts.push("публикуешь " + (s.reels_per_week >= 5 ? "около " : "") + comma(w) + " " + word + " в неделю");
+  }
+  if (s.words_per_minute != null) facts.push("говоришь " + s.words_per_minute + " слов в минуту");
+  let tiles, note;
+  if (s.followers != null) {
+    // есть внутренняя статистика Instagram
+    const growth = s.followers_prev_7d ? s.followers_7d / s.followers_prev_7d : null;
+    tiles = [
+      kpi("Подписчиков", String(s.followers).replace(/\B(?=(\d{3})+(?!\d))/g, " ")),
+      kpi("Новых за неделю", "+" + s.followers_7d, growth && growth >= 1.2 ? "↑ в " + comma(Math.round(growth * 10) / 10) + " раза больше" : growth && growth <= 0.8 ? "↓ меньше прошлой недели" : null, growth >= 1 ? "good" : "bad"),
+      kpi("Обычный ролик набирает", num(s.median_views)),
+      kpi("Пролистывают сразу", s.skip_pct + "%", s.skip_pct >= 45 ? "почти каждый второй" : null, "bad"),
+    ];
+    note = "За 14 дней твои ролики увидели " + String(s.reach_14d).replace(/\B(?=(\d{3})+(?!\d))/g, " ") + " человек, профиль открыли " + num(s.profile_views_14d) + " раз" + (facts.length ? ". Ты " + facts.join(" и ") : "") + ".";
+  } else {
+    const hits = reels.filter((r) => r.ratio >= 1.5).length;
+    const lows = reels.filter((r) => r.ratio <= 0.6).length;
+    tiles = [
+      kpi("Обычный ролик набирает", num(s.median_views)),
+      kpi("Залетели", String(hits), "↑ в 1,5 раза выше", "good"),
+      kpi("Провалились", String(lows), "↓ вдвое ниже", "bad"),
+      kpi("Лайкают и пишут", s.engagement_pct != null ? comma(s.engagement_pct) + "%" : "—"),
+    ];
+    note = facts.length ? "Ты " + facts.join(" и ") + "." : "";
+  }
+  return add(widget("Твой аккаунт", "w2", s.followers != null ? "внутренняя статистика" : "последние " + reels.length + " рилсов"),
+    add(el("div", "kpis"), ...tiles), note ? el("p", "footnote", note) : null);
+}
+function followersWidget() {
+  const s = D.stats, days = s.new_followers;
+  if (!Array.isArray(days) || !days.length) return null;
+  const max = Math.max(...days.map((d) => d[1]), 1);
+  const bars = el("div", "fbars");
+  days.forEach(([day, n], k) => {
+    const col = el("div", k >= days.length - 7 ? "wk" : "");
+    const bar = el("i"); bar.style.height = Math.max(3, (n / max) * 100) + "%";
+    col.title = day + ": +" + n;
+    bars.appendChild(add(col, el("span", "", n ? String(n) : ""), bar));
+  });
+  return add(widget("Новые подписчики", "", "по дням"), bars,
+    add(el("div", "faxis"), el("span", "", days[0][0]), el("span", "", "яркие — последние 7 дней"), el("span", "", days[days.length - 1][0])));
+}
+function retentionWidget() {
+  const reels = (D.reels || []).filter((r) => r.skip_pct != null);
+  if (!reels.length) return null;
+  const head = add(el("tr"), ...["№", "Ролик", "Просмотры", "Пролистали", "Досмотрели", "Репосты", "Сохранения"].map((t) => el("th", "", t)));
+  const rows = [...reels].sort((a, b) => b.views - a.views).map((r) => {
+    const n = el(isReel(r.url) ? "a" : "span", "", "№" + r.n);
+    if (isReel(r.url)) { n.href = r.url; n.target = "_blank"; n.rel = "noopener"; }
+    const skip = el("span", r.skip_pct <= 40 ? "pill-good" : r.skip_pct >= 55 ? "pill-bad" : "", Math.round(r.skip_pct) + "%");
+    const watched = el("span", r.watched_pct >= 80 ? "pill-good" : r.watched_pct <= 15 ? "pill-bad" : "", Math.min(100, Math.round(r.watched_pct)) + "%");
+    return add(el("tr"), add(el("td"), n), add(el("td"), el("span", "hook-cell", r.hook)), el("td", "", num(r.views)),
+      add(el("td"), skip), add(el("td"), watched), el("td", "", String(r.shares)), el("td", "", String(r.saves)));
+  });
+  return add(widget("Как смотрят ролики", "w2", "пролистали в первые секунды и досмотрели до конца"),
+    add(el("div", "table-wrap"), add(el("table", "ret"), add(el("thead"), head), add(el("tbody"), ...rows))));
+}
+function chartWidget() {
+  return add(widget("Просмотры по роликам", "", "слева старые"), chartNode(D.reels, D.stats.median_views, ""));
+}
+function findingsWidget(kind) {
+  const items = (D.analysis || {})[kind];
+  if (!FINDINGS[kind] || !Array.isArray(items) || !items.length) return null;
+  return add(widget(FINDINGS[kind][0], "", items.length + " " + (items.length === 1 ? "вывод" : items.length < 5 ? "вывода" : "выводов")), ...items.map((it) => findingNode(it, FINDINGS[kind][1], D.reels)));
+}
+function noteWidget(card) {
+  const w = widget(card.title, "", "сегодня");
+  if (card.text) w.appendChild(el("p", "info", card.text));
+  if (Array.isArray(card.items) && card.items.length) {
+    w.appendChild(add(el("ul", "note-list"), ...card.items.map((t) => el("li", "", t))));
+  }
+  return w;
+}
+function cardLabel(card) {
+  if (card.type === "stats") return "Твой аккаунт";
+  if (card.type === "followers") return "Подписчики";
+  if (card.type === "retention") return "Как смотрят";
+  if (card.type === "chart") return "Просмотры";
+  if (card.type === "findings") return (FINDINGS[card.kind] || ["Выводы"])[0];
+  if (card.type === "note") return card.title;
+  if (card.type === "script") return card.script ? "Новый сценарий" : "Сценарий " + (card.index + 1);
+  return "Карточка";
+}
+function cardKey(card) {
+  if (["stats", "chart", "followers", "retention"].includes(card.type)) return card.type;
+  if (card.type === "findings") return "findings-" + card.kind;
+  if (card.type === "script" && !card.script) return "script-" + card.index;
+  return card.key || (card.key = "c" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6));
+}
+function cardNode(card) {
+  let node = null;
+  if (card.type === "stats") node = statsWidget();
+  else if (card.type === "chart") node = chartWidget();
+  else if (card.type === "followers") node = followersWidget();
+  else if (card.type === "retention") node = retentionWidget();
+  else if (card.type === "findings") node = findingsWidget(card.kind);
+  else if (card.type === "note") node = noteWidget(card);
+  else if (card.type === "script") {
+    const sc = card.script || (D.scripts || [])[card.index];
+    if (sc) node = scriptNode(sc, cardLabel(card), true);
+  }
+  // одна карточка каждого вида: повторный ответ поднимает её наверх, а не дублирует
+  if (node) node.dataset.key = cardKey(card);
+  return node;
+}
+function putOnBoard(cards, animate, fromChat) {
+  const nodes = cards.map(cardNode).filter(Boolean);
+  if (fromChat) nodes.forEach((n) => n.classList.add("w2"));
+  [...nodes].reverse().forEach((n) => {
+    $("board").querySelectorAll('[data-key="' + n.dataset.key + '"]').forEach((c) => c.remove());
+    $("board").prepend(n);
+  });
+  if (animate) nodes.forEach((n, k) => { n.style.animationDelay = k * 90 + "ms"; n.classList.add("appear"); });
+  return nodes.length;
+}
+function showCard(key) {
+  setPane("board");
+  const node = $("board").querySelector('[data-key="' + key + '"]');
+  if (!node) return;
+  node.scrollIntoView({ behavior: "smooth", block: "start" });
+  node.classList.add("flash");
+  setTimeout(() => node.classList.remove("flash"), 1600);
+}
+
+/* ---------- Вкладки на телефоне ---------- */
+
+function setPane(pane) {
+  $("dash-grid").dataset.pane = pane;
+  $("tab-chat").setAttribute("aria-selected", String(pane === "chat"));
+  $("tab-board").setAttribute("aria-selected", String(pane === "board"));
+  if (pane === "board") { unseen = 0; $("tab-count").classList.add("hidden"); }
+}
+function bumpUnseen(n) {
+  if (!n || window.matchMedia("(min-width: 900px)").matches || $("dash-grid").dataset.pane === "board") return;
+  unseen += n;
+  $("tab-count").textContent = String(unseen);
+  $("tab-count").classList.remove("hidden");
+}
+$("tab-chat").addEventListener("click", () => setPane("chat"));
+$("tab-board").addEventListener("click", () => setPane("board"));
+
+/* ---------- История разговоров (хранится в этом браузере) ---------- */
+
+function storeKey() { return "dubl-chats-" + D.username; }
+function loadConvs() {
+  try { const raw = localStorage.getItem(storeKey()); const list = raw ? JSON.parse(raw) : []; return Array.isArray(list) ? list : []; }
+  catch { return []; }
+}
+function saveConvs() {
+  try { localStorage.setItem(storeKey(), JSON.stringify(convs.filter((c) => c.msgs.length).slice(0, 50))); } catch { /* браузер не даёт сохранить — работаем без истории */ }
+}
+const clock = (t) => new Date(t).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
+function dayLabel(t) {
+  const d = new Date(t), today = new Date(), y = new Date(); y.setDate(today.getDate() - 1);
+  if (d.toDateString() === today.toDateString()) return "Сегодня";
+  if (d.toDateString() === y.toDateString()) return "Вчера";
+  return d.toLocaleDateString("ru-RU", { day: "numeric", month: "long" });
+}
+function renderHistory() {
+  const list = convs.filter((c) => c.msgs.length).sort((a, b) => b.at - a.at);
+  const box = $("hist-list");
+  box.replaceChildren();
+  if (!list.length) { box.appendChild(el("p", "hist-empty", "Здесь появятся твои разговоры с режиссёром.")); return; }
+  let group = "";
+  list.forEach((c) => {
+    const g = dayLabel(c.at);
+    if (g !== group) { group = g; box.appendChild(el("div", "hist-group", g)); }
+    const n = c.msgs.filter((m) => m.role === "user").length;
+    const item = add(el("button", "hist-item" + (c === cur ? " cur" : "")), el("b", "", c.title),
+      el("span", "", clock(c.at) + ", " + n + " " + (n === 1 ? "вопрос" : n < 5 ? "вопроса" : "вопросов")));
+    item.type = "button";
+    item.addEventListener("click", () => { openConv(c); $("hist").hidden = true; });
+    box.appendChild(item);
+  });
+}
+$("open-hist").addEventListener("click", () => { renderHistory(); $("hist").hidden = false; });
+$("close-hist").addEventListener("click", () => { $("hist").hidden = true; });
+$("new-chat").addEventListener("click", () => newConv());
+
+function newConv() {
+  if (cur && !cur.msgs.length) return openConv(cur);
+  const c = { id: Date.now().toString(36), title: "Новый разговор", at: Date.now(), msgs: [] };
+  convs.push(c);
+  openConv(c);
+  $("q").focus();
+}
+
+/* ---------- Сообщения ---------- */
+
+function aiNode(text, at, cards, error, suggest) {
+  const body = add(el("div"), add(el("div", "m-head"), el("b", "", "Режиссёр"), at ? el("time", "", clock(at)) : null),
+    el("div", "m-txt" + (error ? " err" : ""), text));
+  if (cards && cards.length) {
+    const shown = add(el("div", "shown"), el("span", "", "На экране:"));
+    cards.forEach((card) => {
+      const b = el("button", "", cardLabel(card));
+      b.type = "button";
+      b.addEventListener("click", () => showCard(cardKey(card)));
+      shown.appendChild(b);
+    });
+    body.appendChild(shown);
+  }
+  if (suggest && suggest.length) {
+    const box = el("div", "follow");
+    suggest.slice(0, 3).forEach((q) => {
+      const b = el("button", "", q);
+      b.type = "button";
+      b.addEventListener("click", () => ask(q));
+      box.appendChild(b);
+    });
+    body.appendChild(box);
+  }
+  return add(el("div", "m-ai"), el("span", "avatar"), body);
+}
+function meNode(text) { return el("div", "m-me", text); }
+
+function emptyState() {
+  const sugs = el("div", "sugs");
+  SUGGEST.forEach(([q, hint]) => {
+    const b = add(el("button", "sug"), el("b", "", q), el("span", "", hint));
+    b.type = "button";
+    b.addEventListener("click", () => ask(q));
+    sugs.appendChild(b);
+  });
+  return add(el("div", "empty"),
+    add(el("div", "hello"), el("div", "avatar"), el("h3", "", "О чём поговорим?"),
+      el("p", "", "Разбор @" + D.username + " уже на экране. Спроси, и я отвечу и покажу.")), sugs);
+}
+function scrollDown() { $("thread").scrollTop = $("thread").scrollHeight; }
+
+function openConv(c) {
+  cur = c;
+  $("chat-title").textContent = c.title;
+  const thread = $("thread");
+  thread.replaceChildren();
+  if (!c.msgs.length) thread.appendChild(emptyState());
+  c.msgs.forEach((m, k) => thread.appendChild(m.role === "user" ? meNode(m.text) : aiNode(m.text, m.at, m.cards, m.error, k === c.msgs.length - 1 ? m.suggest : null)));
+  // экран: разбор + всё, что режиссёр показал в этом разговоре
+  baseBoard();
+  c.msgs.filter((m) => m.cards && m.cards.length).forEach((m) => putOnBoard(m.cards, false, true));
+  requestAnimationFrame(scrollDown);
+}
+function baseBoard() {
+  $("board").replaceChildren();
+  add($("board"), introWidget());
+  putOnBoard([{ type: "stats" }, { type: "chart" }, { type: "followers" }, { type: "retention" }, { type: "findings", kind: "works" }, { type: "findings", kind: "fails" }], false);
+  // если подписчиков нет, график просмотров занимает всю ширину
+  if (!$("board").querySelector('[data-key="followers"]')) { const ch = $("board").querySelector('[data-key="chart"]'); if (ch) ch.classList.add("w2"); }
+  const intro = $("board").querySelector(".widget:not([data-key])");
+  if (intro) $("board").prepend(intro);
+}
+
+function renderDash(d) {
+  D = d;
+  convs = loadConvs();
+  unseen = 0;
+  $("tab-count").classList.add("hidden");
+  setPane("chat");
+  cur = null;
+  newConv();
+  [...$("board").children].forEach((n, k) => { n.style.animationDelay = k * 80 + "ms"; n.classList.add("appear"); });
+}
+
+async function ask(text) {
+  text = text.trim();
+  if (!text || busy || !D) return;
+  busy = true;
+  updateSend();
+  const c = cur;
+  const history = c.msgs.filter((m) => !m.error).map((m) => ({ role: m.role, text: m.text }));
+  if (!c.msgs.length) { c.title = text.length > 42 ? text.slice(0, 40) + "…" : text; $("chat-title").textContent = c.title; $("thread").replaceChildren(); }
+  c.msgs.push({ role: "user", text, at: Date.now() });
+  c.at = Date.now();
+  $("thread").querySelectorAll(".follow").forEach((f) => f.remove());
+  $("thread").appendChild(meNode(text));
+  const typing = add(el("div", "m-ai"), el("span", "avatar"), add(el("div"), add(el("div", "m-head"), el("b", "", "Режиссёр")),
+    add(el("span", "typing", ""), el("i"), el("i"), el("i"))));
+  typing.setAttribute("aria-label", "Режиссёр печатает");
+  $("thread").appendChild(typing);
+  scrollDown();
+
+  let msg;
+  try {
+    const r = await fetch("/api/chat", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username: D.username, message: text, history }),
+    });
+    const data = await r.json();
+    msg = r.ok ? { role: "assistant", text: data.reply, at: Date.now(), cards: data.cards || [], suggest: data.suggest || [] }
+               : { role: "assistant", text: data.detail || "Не получилось ответить. Отправь вопрос ещё раз.", at: Date.now(), error: true };
+  } catch {
+    msg = { role: "assistant", text: "Нет связи с сервером. Отправь вопрос ещё раз.", at: Date.now(), error: true };
+  }
+  typing.remove();
+  if (cur === c) {
+    if (msg.cards) msg.cards.forEach(cardKey); // ключи нужны до показа, чтобы кнопки «На экране» находили карточки
+    $("thread").appendChild(aiNode(msg.text, msg.at, msg.cards, msg.error, msg.suggest));
+    if (!msg.error) speakReply(msg.text);
+    if (msg.cards) bumpUnseen(putOnBoard(msg.cards, true, true));
+    scrollDown();
+  }
+  c.msgs.push(msg);
+  saveConvs();
+  busy = false;
+  updateSend();
+}
+
+function updateSend() { $("send").disabled = busy || !$("q").value.trim(); }
+function grow() { const q = $("q"); q.style.height = "auto"; q.style.height = Math.min(q.scrollHeight, 140) + "px"; }
+$("q").addEventListener("input", () => { grow(); updateSend(); });
+$("q").addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); $("ask").requestSubmit(); }
+});
+$("ask").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const text = $("q").value;
+  if (!text.trim() || busy) return;
+  $("q").value = "";
+  grow();
+  ask(text);
+});
+$("other").addEventListener("click", () => { $("nick").value = ""; show("start"); $("nick").focus(); });
+
+/* ---------- Голос: разговор с режиссёром, как с помощником в ролике ----------
+   Работает там, где страницу показывает Claude (Chrome или приложение для компьютера).
+   На обычном сервере этих возможностей пока нет — сцена с кругом не появляется, остаётся текст. */
+let dict = null, tts = null, voiceOn = false, listening = false, talked = false, heard = "", quiet = null, useRu = true;
+function setStatus(text, isBusy) { $("status-text").textContent = text; $("status").classList.toggle("busy", !!isBusy); }
+function stage(mode, text) {
+  const st = $("stage");
+  st.classList.remove("listen", "think", "speak");
+  if (mode !== "idle") st.classList.add(mode);
+  $("stage-text").textContent = text || { idle: "Режиссёр на связи", listen: "Слушаю…", think: "Думаю…", speak: "Говорю…" }[mode];
+  $("stage-hint").hidden = mode !== "idle";
+  setStatus({ idle: "на связи", listen: "слушает", think: "думает", speak: "говорит" }[mode], mode !== "idle");
+}
+function speakReply(text) {
+  if (!tts || !voiceOn) return;
+  tts.speak(String(text).slice(0, 2000), { language: "ru" }).catch(() => {});
+}
+function setVoiceOut(on) {
+  voiceOn = on;
+  $("voice-out").classList.toggle("active", on);
+  $("voice-out").setAttribute("aria-pressed", String(on));
+  if (!on && tts) tts.stop();
+}
+(async () => {
+  if (!window.claude || typeof window.claude.use !== "function") return;
+  const [d, t] = await Promise.all([window.claude.use("dictation"), window.claude.use("tts")]).catch(() => [null, null]);
+  if (t) {
+    tts = t;
+    setVoiceOut(true);
+    $("voice-out").hidden = false;
+    $("voice-out").addEventListener("click", () => setVoiceOut(!voiceOn));
+    t.onState(({ state }) => { if (!dict) return; if (state === "speaking") stage("speak"); else if (!listening && !busy) stage("idle"); });
+    // приветствие голосом, когда открылся разбор
+    const open0 = renderDash;
+    renderDash = function (d2) {
+      open0(d2);
+      const a = d2.analysis || {};
+      speakReply("Привет! Разбор " + d2.username.replace(/[._]/g, " ") + " готов. " + (a.summary || "") + " Спроси, что снять сегодня.");
+    };
+  }
+  if (!d) return;
+  dict = d;
+  $("stage").hidden = false;
+  document.querySelector(".chat").classList.add("voice");
+
+  // пока думает — показываем это на круге
+  const ask0 = ask;
+  ask = async function (text) {
+    stage("think");
+    try { await ask0(text); } finally { if (!listening && !$("stage").classList.contains("speak")) stage("idle"); }
+  };
+
+  const live = (partial) => { $("stage-live").textContent = (heard + " " + (partial || "")).trim(); };
+  const armQuiet = (ms) => { clearTimeout(quiet); quiet = setTimeout(() => { if (listening) d.stop().catch(() => {}); }, ms); };
+  d.onPartial(({ text }) => { if (text) clearTimeout(quiet); live(text); });
+  d.onFinal(({ text }) => { heard = (heard + text).trim(); live(""); armQuiet(1600); }); // замолчал на полторы секунды — отправляем
+  d.onState(({ state, reason }) => {
+    const was = listening;
+    listening = state === "listening" || state === "starting";
+    if (listening) { talked = true; stage("listen"); if (state === "listening" && !was) armQuiet(9000); return; }
+    if (state !== "idle") return;
+    clearTimeout(quiet);
+    const text = heard.trim();
+    heard = "";
+    $("stage-live").textContent = "";
+    if (reason === "not_granted" || reason === "unavailable") {
+      if (reason === "unavailable" && useRu) { useRu = false; stage("idle", "Нажми ещё раз"); return; }
+      $("stage").hidden = true; // микрофон запрещён или недоступен — остаётся ввод текстом
+      document.querySelector(".chat").classList.remove("voice");
+      return;
+    }
+    const send = talked && text && !busy;
+    talked = false;
+    if (send) ask(text); else stage("idle");
+  });
+
+  // start() должен вызываться прямо из нажатия, без ожиданий до него
+  function toggleTalk() {
+    if (listening) { d.stop().catch(() => {}); return; }
+    if (busy || !D) return;
+    heard = "";
+    if (tts) tts.stop();
+    d.start(useRu ? { language: "ru" } : undefined).catch(() => {});
+  }
+  $("orb").addEventListener("click", toggleTalk);
+  document.addEventListener("keydown", (e) => {
+    if (e.code !== "Space" || e.repeat || $("dash").classList.contains("hidden")) return;
+    const tag = (e.target && e.target.tagName) || "";
+    if (["TEXTAREA", "INPUT", "BUTTON", "SELECT", "A"].includes(tag)) return;
+    e.preventDefault();
+    toggleTalk();
+  });
+})();
+</script>
+</body>
+</html>
