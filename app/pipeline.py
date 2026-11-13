@@ -2,10 +2,9 @@
 import os
 import statistics
 import time
-from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 
-from . import brain, demo, instagram, speech
+from . import instagram
 
 TRANSCRIBE_LIMIT = int(os.environ.get("TRANSCRIBE_LIMIT", "12"))
 REELS_LIMIT = int(os.environ.get("REELS_LIMIT", "30"))
@@ -25,11 +24,8 @@ def demo_mode() -> bool:
     return not ready
 
 
-def run(username: str, report) -> dict:
-    if demo_mode():
-        return demo.run(username, report)
-
-    report("collect", 5)
+def collect(username: str) -> dict:
+    """Шаг 1: рилсы и цифры. Возвращает рилсы (со ссылками на видео) и список тех, что надо расшифровать."""
     try:
         reels = instagram.fetch_reels(username, REELS_LIMIT)
     except instagram.NotAvailable as e:
@@ -38,30 +34,20 @@ def run(username: str, report) -> dict:
         raise UserError(
             "Не нашли у этого аккаунта открытых рилсов. Проверь ник и что профиль не закрыт."
         )
-
-    report("numbers", 25)
     stats = compute_stats(reels)
+    targets = [r["n"] for r in pick_for_transcription(reels)]
+    return {"reels": reels, "stats": stats, "transcribe": targets}
 
-    report("speech", 35)
-    targets = pick_for_transcription(reels)
-    with ThreadPoolExecutor(max_workers=4) as pool:
-        texts = list(pool.map(lambda r: speech.transcribe(r["video_url"]), targets))
-    for reel, text in zip(targets, texts):
-        reel["transcript"] = text
-    paces = [
-        len(r["transcript"].split()) / r["duration"] * 60
-        for r in targets
-        if r.get("transcript") and r["duration"] > 3
-    ]
+
+def add_speech_stats(reels: list[dict], stats: dict) -> None:
+    """После расшифровки: темп речи и сколько роликов удалось послушать."""
+    heard = [r for r in reels if r.get("transcript")]
+    paces = [len(r["transcript"].split()) / r["duration"] * 60 for r in heard if r["duration"] > 3]
     stats["words_per_minute"] = round(statistics.median(paces)) if paces else None
-    stats["transcribed"] = sum(1 for r in targets if r.get("transcript"))
+    stats["transcribed"] = len(heard)
 
-    report("analysis", 60)
-    analysis = brain.analyze(username, reels, stats)
 
-    report("scripts", 80)
-    scripts = brain.write_scripts(username, reels, stats, analysis)
-
+def final_result(username: str, reels: list[dict], stats: dict, analysis: dict, scripts: list) -> dict:
     return {
         "username": username,
         "demo": False,
