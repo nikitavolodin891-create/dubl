@@ -320,6 +320,64 @@
   .ret .pill-good { background: var(--good-bg); color: var(--good); }
   .ret .pill-bad { background: var(--bad-bg); color: var(--bad); }
   @media (prefers-reduced-motion: reduce) { .steps .now i, .appear, .typing i { animation: none; } .thread { scroll-behavior: auto; } }
+
+  /* ---------- Экран разговора: голос и человек в центре, одна карточка справа ---------- */
+  .talk { min-height: 100dvh; max-width: 1400px; margin: 0 auto; box-sizing: border-box; display: flex; flex-direction: column;
+    padding: 22px max(16px, min(4vw, 48px)) 18px; }
+  .talk-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .brand { display: flex; align-items: center; gap: 10px; font-size: 20px; font-weight: 800; letter-spacing: -.02em; }
+  .brand .dot { width: 12px; height: 12px; border-radius: 50%; background: var(--accent); }
+  .talk-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .who { font-size: 14px; color: var(--soft); margin-right: 4px; }
+  .ghost { border: 0; background: var(--card); border-radius: 999px; padding: 9px 15px; min-height: 40px; font-size: 14px; color: var(--ink); cursor: pointer; }
+  .ghost:hover { background: var(--accent-soft); }
+  .ghost[aria-pressed="false"] { color: var(--soft); }
+  .talk-main { flex: 1; display: grid; grid-template-columns: minmax(0, 1fr); gap: 28px; align-items: start; padding-top: 28px; }
+  @media (min-width: 960px) { .talk-main { grid-template-columns: minmax(0, 1.05fr) minmax(0, .95fr); gap: 56px; padding-top: 52px; } }
+  .talk-left { display: flex; flex-direction: column; align-items: flex-start; gap: 16px; min-width: 0; }
+  .vwrap { position: relative; width: clamp(140px, 17vw, 210px); aspect-ratio: 1; display: grid; place-items: center; margin-bottom: 6px; }
+  .vwrap .ring { position: absolute; inset: 0; border-radius: 50%; background: var(--accent); opacity: 0; pointer-events: none; }
+  .vorb { position: relative; width: 100%; height: 100%; border-radius: 50%; border: 0; cursor: pointer; color: #fff; display: grid; place-items: center;
+    background: radial-gradient(circle at 36% 30%, #F3C5CC, var(--accent) 62%, #8E4652); box-shadow: 0 30px 60px -20px rgba(142, 70, 82, .55); transition: transform .2s; }
+  .vorb:hover { transform: scale(1.03); }
+  .vorb svg { width: 32%; height: 32%; }
+  .vorb .eq { display: none; gap: 7px; align-items: center; height: 30%; }
+  .vorb .eq i { display: block; width: 8px; height: 40%; border-radius: 4px; background: #fff; }
+  .vwrap[data-mode="listen"] .ring { animation: vring 2s ease-out infinite; }
+  .vwrap[data-mode="listen"] .ring.r2 { animation-delay: 1s; }
+  .vwrap[data-mode="listen"] .vorb { animation: vbreathe 2s ease-in-out infinite; }
+  .vwrap[data-mode="think"] .vorb { animation: vbreathe .8s ease-in-out infinite; opacity: .85; }
+  .vwrap[data-mode="speak"] .vorb svg { display: none; }
+  .vwrap[data-mode="speak"] .vorb .eq { display: flex; }
+  .vwrap[data-mode="speak"] .vorb .eq i { animation: veq .7s ease-in-out infinite alternate; }
+  .vorb .eq i:nth-child(2) { animation-delay: .15s; } .vorb .eq i:nth-child(3) { animation-delay: .3s; } .vorb .eq i:nth-child(4) { animation-delay: .45s; }
+  @keyframes vring { 0% { transform: scale(.9); opacity: .35; } 100% { transform: scale(1.6); opacity: 0; } }
+  @keyframes vbreathe { 50% { transform: scale(1.06); } }
+  @keyframes veq { to { height: 100%; } }
+  .vstate { font-size: 13px; letter-spacing: .06em; text-transform: uppercase; color: var(--soft); }
+  .said { font-size: 17px; color: var(--soft); min-height: 1.5em; overflow-wrap: anywhere; }
+  .reply { font-size: clamp(24px, 3vw, 38px); line-height: 1.2; font-weight: 800; letter-spacing: -.03em; max-width: 19em; white-space: pre-line; overflow-wrap: anywhere; }
+  .reply.err { color: var(--bad); }
+  .reply.long { font-size: clamp(20px, 2.2vw, 27px); line-height: 1.3; letter-spacing: -.02em; }
+  @media (max-width: 600px) { .who { display: none; } .talk-actions { gap: 6px; } .talk .ghost { padding: 7px 12px; min-height: 36px; font-size: 13px; } }
+  .talk .follow { margin-top: 0; }
+  .talk .follow button { padding: 9px 14px; font-size: 14px; min-height: 40px; }
+  .talk .composer { margin: 6px 0 0; width: 100%; max-width: 560px; box-sizing: border-box; }
+  .spot { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-content: start; min-width: 0; }
+  .spot .widget, .spot .script { border-radius: 28px; padding: 26px; box-shadow: 0 40px 80px -30px rgba(90, 40, 50, .28); }
+  .spot .kpi b { font-size: clamp(34px, 4vw, 48px); }
+  .spot .handle { font-size: clamp(30px, 4vw, 44px); }
+  .strip { display: flex; gap: 8px; align-items: center; overflow-x: auto; padding: 22px 0 4px; scrollbar-width: none; }
+  .strip::-webkit-scrollbar { display: none; }
+  .strip .lbl { flex: none; font-size: 13px; color: var(--soft); margin-right: 4px; }
+  .strip button { flex: none; border: 0; background: var(--card); border-radius: 999px; padding: 10px 16px; min-height: 40px; font-size: 14px; color: var(--ink); cursor: pointer; }
+  .strip button:hover { background: var(--accent-soft); }
+  .strip button[aria-current="true"] { background: var(--ink); color: var(--card); }
+  .talk .hist { position: fixed; inset: 0; z-index: 20; background: rgba(30, 23, 25, .35); display: flex; justify-content: flex-end; }
+  .talk .hist[hidden] { display: none; }
+  .hist-panel { width: min(460px, 100%); height: 100%; background: var(--card); display: flex; flex-direction: column; }
+  .hist-panel .thread { flex: 1; }
+  @media (prefers-reduced-motion: reduce) { .vwrap .ring, .vorb, .vorb .eq i { animation: none !important; } }
 </style>
 </head>
 <body>
@@ -377,54 +435,54 @@
     <ul class="steps" id="steps"></ul>
   </section>
 
-  <section id="dash" class="wrap app hidden">
-    <div class="window">
-      <div class="titlebar">
-        <span class="lights" aria-hidden="true"><i></i><i></i><i></i></span>
-        <span class="wname">Дубль</span>
-        <span class="status" id="status"><i></i><span class="sl">Режиссёр </span><span id="status-text">на связи</span></span>
-        <button class="other" id="other" type="button">Другой аккаунт</button>
+  <section id="dash" class="talk hidden">
+    <header class="talk-top">
+      <div class="brand"><span class="dot"></span>Дубль</div>
+      <div class="talk-actions">
+        <span class="who" id="who"></span>
+        <button class="ghost" type="button" id="voice-out" aria-pressed="true">Звук: вкл</button>
+        <button class="ghost" type="button" id="open-log">Переписка</button>
+        <button class="ghost" type="button" id="open-hist">История</button>
+        <button class="ghost" type="button" id="new-chat">Новый разговор</button>
+        <button class="ghost" type="button" id="other">Другой аккаунт</button>
       </div>
-      <div class="dash" id="dash-grid" data-pane="chat">
-        <div class="tabs" role="tablist" aria-label="Что показать">
-          <button type="button" role="tab" id="tab-chat" aria-selected="true">Разговор</button>
-          <button type="button" role="tab" id="tab-board" aria-selected="false">Экран<span class="count hidden" id="tab-count"></span></button>
+    </header>
+
+    <div class="talk-main">
+      <div class="talk-left">
+        <div class="vwrap" id="stage" data-mode="idle">
+          <span class="ring" aria-hidden="true"></span><span class="ring r2" aria-hidden="true"></span>
+          <button class="vorb" id="orb" type="button" aria-label="Говорить с режиссёром">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
+            <span class="eq" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+          </button>
         </div>
-        <aside class="chat" aria-label="Разговор с режиссёром">
-          <div class="chat-top">
-            <span class="chat-title" id="chat-title">Новый разговор</span>
-            <button class="icon-btn" type="button" id="open-hist" aria-label="История разговоров">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/></svg><span class="lbl">История</span>
-            </button>
-            <button class="icon-btn" type="button" id="voice-out" aria-pressed="false" aria-label="Озвучивать ответы" hidden>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>
-            </button>
-            <button class="icon-btn" type="button" id="new-chat" aria-label="Новый разговор">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span class="lbl">Новый чат</span>
-            </button>
-          </div>
-          <div class="stage" id="stage" hidden>
-            <button class="orb" id="orb" type="button" aria-label="Говорить с режиссёром">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
-              <span class="eq" aria-hidden="true"><i></i><i></i><i></i></span>
-            </button>
-            <div class="stage-text" id="stage-text">Режиссёр на связи</div>
-            <div class="stage-hint" id="stage-hint">Нажми <kbd>пробел</kbd> или на круг и говори</div>
-            <div class="stage-live" id="stage-live" aria-live="polite"></div>
-          </div>
-          <div class="thread" id="thread" aria-live="polite"></div>
-          <form class="composer" id="ask">
-            <textarea id="q" rows="1" placeholder="Или напиши текстом" maxlength="500" aria-label="Вопрос режиссёру"></textarea>
-            <button class="send" id="send" aria-label="Отправить" disabled>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
-            </button>
-          </form>
-          <div class="hist" id="hist" hidden>
-            <div class="hist-top"><b>История разговоров</b><button class="icon-btn" type="button" id="close-hist">Закрыть</button></div>
-            <div class="hist-list" id="hist-list"></div>
-          </div>
-        </aside>
-        <div class="board" id="board"></div>
+        <div class="vstate" id="stage-text">Нажми на круг и спроси</div>
+        <p class="said" id="said"></p>
+        <p class="reply" id="reply" aria-live="polite"></p>
+        <div class="follow" id="follow"></div>
+        <form class="composer" id="ask">
+          <textarea id="q" rows="1" placeholder="Или напиши текстом" maxlength="500" aria-label="Вопрос режиссёру"></textarea>
+          <button class="send" id="send" aria-label="Отправить" disabled>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+          </button>
+        </form>
+      </div>
+      <div class="spot" id="board" aria-live="polite"></div>
+    </div>
+
+    <nav class="strip" id="strip" aria-label="Что уже показал режиссёр"></nav>
+
+    <div class="hist" id="hist" hidden>
+      <div class="hist-panel">
+        <div class="hist-top"><b>История разговоров</b><button class="ghost" type="button" id="close-hist">Закрыть</button></div>
+        <div class="hist-list" id="hist-list"></div>
+      </div>
+    </div>
+    <div class="hist" id="log" hidden>
+      <div class="hist-panel">
+        <div class="hist-top"><b id="chat-title">Переписка</b><button class="ghost" type="button" id="close-log">Закрыть</button></div>
+        <div class="thread" id="thread"></div>
       </div>
     </div>
   </section>
@@ -777,41 +835,71 @@ function cardNode(card) {
   if (node) node.dataset.key = cardKey(card);
   return node;
 }
-function putOnBoard(cards, animate, fromChat) {
-  const nodes = cards.map(cardNode).filter(Boolean);
-  if (fromChat) nodes.forEach((n) => n.classList.add("w2"));
-  [...nodes].reverse().forEach((n) => {
-    $("board").querySelectorAll('[data-key="' + n.dataset.key + '"]').forEach((c) => c.remove());
-    $("board").prepend(n);
+/* ---------- Центр внимания: одна-две карточки про то, о чём сейчас говорим ---------- */
+
+let shown = [];        // всё, что режиссёр уже показал в этом разговоре: [{ key, card }]
+let currentKeys = [];  // какие карточки сейчас в центре
+
+function labelOf(card) { return card.type === "intro" ? "Обзор" : cardLabel(card); }
+function spotNode(card) {
+  if (card.type === "intro") { const n = introWidget(); n.dataset.key = "intro"; return n; }
+  return cardNode(card);
+}
+function baseCards() {
+  const list = [{ type: "intro", key: "intro" }, { type: "stats" }, { type: "chart" }];
+  if (D.stats && Array.isArray(D.stats.new_followers) && D.stats.new_followers.length) list.push({ type: "followers" });
+  if ((D.reels || []).some((r) => r.skip_pct != null)) list.push({ type: "retention" });
+  list.push({ type: "findings", kind: "works" }, { type: "findings", kind: "fails" });
+  (D.scripts || []).forEach((s, i) => list.push({ type: "script", index: i }));
+  return list;
+}
+function remember(cards) {
+  (cards || []).forEach((card) => {
+    const key = cardKey(card);
+    if (!shown.some((s) => s.key === key)) shown.push({ key, card });
   });
-  if (animate) nodes.forEach((n, k) => { n.style.animationDelay = k * 90 + "ms"; n.classList.add("appear"); });
+}
+function renderStrip() {
+  const strip = $("strip");
+  strip.replaceChildren(el("span", "lbl", "На экране было:"));
+  shown.forEach(({ key, card }) => {
+    const b = el("button", "", labelOf(card));
+    b.type = "button";
+    b.setAttribute("aria-current", String(currentKeys.includes(key)));
+    b.addEventListener("click", () => spotlight([card], true));
+    strip.appendChild(b);
+  });
+}
+function spotlight(cards, animate) {
+  const nodes = (cards || []).slice(0, 2).map(spotNode).filter(Boolean);
+  if (!nodes.length) return 0;
+  $("board").replaceChildren(...nodes);
+  if (animate) nodes.forEach((n, k) => { n.style.animationDelay = k * 120 + "ms"; n.classList.add("appear"); });
+  currentKeys = nodes.map((n) => n.dataset.key);
+  renderStrip();
   return nodes.length;
 }
 function showCard(key) {
-  setPane("board");
-  const node = $("board").querySelector('[data-key="' + key + '"]');
-  if (!node) return;
-  node.scrollIntoView({ behavior: "smooth", block: "start" });
-  node.classList.add("flash");
-  setTimeout(() => node.classList.remove("flash"), 1600);
+  const hit = shown.find((s) => s.key === key);
+  if (hit) spotlight([hit.card], true);
+  $("log").hidden = true;
 }
-
-/* ---------- Вкладки на телефоне ---------- */
-
-function setPane(pane) {
-  $("dash-grid").dataset.pane = pane;
-  $("tab-chat").setAttribute("aria-selected", String(pane === "chat"));
-  $("tab-board").setAttribute("aria-selected", String(pane === "board"));
-  if (pane === "board") { unseen = 0; $("tab-count").classList.add("hidden"); }
+function caption(said, reply, err) {
+  $("said").textContent = said ? "Ты: «" + said + "»" : "";
+  $("reply").textContent = reply || "";
+  $("reply").classList.toggle("err", !!err);
+  $("reply").classList.toggle("long", String(reply || "").length > 150);
 }
-function bumpUnseen(n) {
-  if (!n || window.matchMedia("(min-width: 900px)").matches || $("dash-grid").dataset.pane === "board") return;
-  unseen += n;
-  $("tab-count").textContent = String(unseen);
-  $("tab-count").classList.remove("hidden");
+function followUps(list) {
+  const box = $("follow");
+  box.replaceChildren();
+  (list && list.length ? list : SUGGEST.map((s) => s[0])).slice(0, 4).forEach((q) => {
+    const b = el("button", "", q);
+    b.type = "button";
+    b.addEventListener("click", () => ask(q));
+    box.appendChild(b);
+  });
 }
-$("tab-chat").addEventListener("click", () => setPane("chat"));
-$("tab-board").addEventListener("click", () => setPane("board"));
 
 /* ---------- История разговоров (хранится в этом браузере) ---------- */
 
@@ -849,6 +937,9 @@ function renderHistory() {
 }
 $("open-hist").addEventListener("click", () => { renderHistory(); $("hist").hidden = false; });
 $("close-hist").addEventListener("click", () => { $("hist").hidden = true; });
+$("open-log").addEventListener("click", () => { $("log").hidden = false; scrollDown(); });
+$("close-log").addEventListener("click", () => { $("log").hidden = true; });
+["hist", "log"].forEach((id) => $(id).addEventListener("click", (e) => { if (e.target.id === id) $(id).hidden = true; }));
 $("new-chat").addEventListener("click", () => newConv());
 
 function newConv() {
@@ -856,30 +947,19 @@ function newConv() {
   const c = { id: Date.now().toString(36), title: "Новый разговор", at: Date.now(), msgs: [] };
   convs.push(c);
   openConv(c);
-  $("q").focus();
 }
 
-/* ---------- Сообщения ---------- */
+/* ---------- Переписка (полный текст разговора, открывается кнопкой) ---------- */
 
-function aiNode(text, at, cards, error, suggest) {
+function aiNode(text, at, cards, error) {
   const body = add(el("div"), add(el("div", "m-head"), el("b", "", "Режиссёр"), at ? el("time", "", clock(at)) : null),
     el("div", "m-txt" + (error ? " err" : ""), text));
   if (cards && cards.length) {
-    const shown = add(el("div", "shown"), el("span", "", "На экране:"));
+    const box = add(el("div", "shown"), el("span", "", "Показал:"));
     cards.forEach((card) => {
-      const b = el("button", "", cardLabel(card));
+      const b = el("button", "", labelOf(card));
       b.type = "button";
       b.addEventListener("click", () => showCard(cardKey(card)));
-      shown.appendChild(b);
-    });
-    body.appendChild(shown);
-  }
-  if (suggest && suggest.length) {
-    const box = el("div", "follow");
-    suggest.slice(0, 3).forEach((q) => {
-      const b = el("button", "", q);
-      b.type = "button";
-      b.addEventListener("click", () => ask(q));
       box.appendChild(b);
     });
     body.appendChild(box);
@@ -887,52 +967,45 @@ function aiNode(text, at, cards, error, suggest) {
   return add(el("div", "m-ai"), el("span", "avatar"), body);
 }
 function meNode(text) { return el("div", "m-me", text); }
-
-function emptyState() {
-  const sugs = el("div", "sugs");
-  SUGGEST.forEach(([q, hint]) => {
-    const b = add(el("button", "sug"), el("b", "", q), el("span", "", hint));
-    b.type = "button";
-    b.addEventListener("click", () => ask(q));
-    sugs.appendChild(b);
-  });
-  return add(el("div", "empty"),
-    add(el("div", "hello"), el("div", "avatar"), el("h3", "", "О чём поговорим?"),
-      el("p", "", "Разбор @" + D.username + " уже на экране. Спроси, и я отвечу и покажу.")), sugs);
-}
 function scrollDown() { $("thread").scrollTop = $("thread").scrollHeight; }
+
+function greeting() {
+  const a = D.analysis || {};
+  return "Разбор @" + D.username + " готов" + (a.niche ? " — " + a.niche : "") + ". Что разберём?";
+}
 
 function openConv(c) {
   cur = c;
   $("chat-title").textContent = c.title;
   const thread = $("thread");
   thread.replaceChildren();
-  if (!c.msgs.length) thread.appendChild(emptyState());
-  c.msgs.forEach((m, k) => thread.appendChild(m.role === "user" ? meNode(m.text) : aiNode(m.text, m.at, m.cards, m.error, k === c.msgs.length - 1 ? m.suggest : null)));
-  // экран: разбор + всё, что режиссёр показал в этом разговоре
-  baseBoard();
-  c.msgs.filter((m) => m.cards && m.cards.length).forEach((m) => putOnBoard(m.cards, false, true));
-  requestAnimationFrame(scrollDown);
-}
-function baseBoard() {
-  $("board").replaceChildren();
-  add($("board"), introWidget());
-  putOnBoard([{ type: "stats" }, { type: "chart" }, { type: "followers" }, { type: "retention" }, { type: "findings", kind: "works" }, { type: "findings", kind: "fails" }], false);
-  // если подписчиков нет, график просмотров занимает всю ширину
-  if (!$("board").querySelector('[data-key="followers"]')) { const ch = $("board").querySelector('[data-key="chart"]'); if (ch) ch.classList.add("w2"); }
-  const intro = $("board").querySelector(".widget:not([data-key])");
-  if (intro) $("board").prepend(intro);
+  if (!c.msgs.length) thread.appendChild(el("p", "hist-empty", "Здесь будет весь текст разговора."));
+  c.msgs.forEach((m) => thread.appendChild(m.role === "user" ? meNode(m.text) : aiNode(m.text, m.at, m.cards, m.error)));
+
+  shown = [];
+  remember(baseCards());
+  c.msgs.forEach((m) => remember(m.cards));
+  const lastAi = [...c.msgs].reverse().find((m) => m.role === "assistant");
+  const lastMe = [...c.msgs].reverse().find((m) => m.role === "user");
+  if (lastAi) {
+    caption(lastMe ? lastMe.text : "", lastAi.text, lastAi.error);
+    followUps(lastAi.suggest);
+    if (!spotlight(lastAi.cards, false)) spotlight([{ type: "intro", key: "intro" }, { type: "stats" }], false);
+  } else {
+    caption("", greeting());
+    followUps();
+    spotlight([{ type: "intro", key: "intro" }, { type: "stats" }], false);
+  }
 }
 
 function renderDash(d) {
   D = d;
   convs = loadConvs();
-  unseen = 0;
-  $("tab-count").classList.add("hidden");
-  setPane("chat");
+  $("who").textContent = "@" + d.username;
   cur = null;
   newConv();
-  [...$("board").children].forEach((n, k) => { n.style.animationDelay = k * 80 + "ms"; n.classList.add("appear"); });
+  [...$("board").children].forEach((n, k) => { n.style.animationDelay = k * 120 + "ms"; n.classList.add("appear"); });
+  if (!cur.msgs.length) speak(greeting());
 }
 
 async function ask(text) {
@@ -940,18 +1013,16 @@ async function ask(text) {
   if (!text || busy || !D) return;
   busy = true;
   updateSend();
+  stopSpeaking();
   const c = cur;
   const history = c.msgs.filter((m) => !m.error).map((m) => ({ role: m.role, text: m.text }));
   if (!c.msgs.length) { c.title = text.length > 42 ? text.slice(0, 40) + "…" : text; $("chat-title").textContent = c.title; $("thread").replaceChildren(); }
   c.msgs.push({ role: "user", text, at: Date.now() });
   c.at = Date.now();
-  $("thread").querySelectorAll(".follow").forEach((f) => f.remove());
   $("thread").appendChild(meNode(text));
-  const typing = add(el("div", "m-ai"), el("span", "avatar"), add(el("div"), add(el("div", "m-head"), el("b", "", "Режиссёр")),
-    add(el("span", "typing", ""), el("i"), el("i"), el("i"))));
-  typing.setAttribute("aria-label", "Режиссёр печатает");
-  $("thread").appendChild(typing);
-  scrollDown();
+  caption(text, "…");
+  $("follow").replaceChildren();
+  stage("think");
 
   let msg;
   try {
@@ -961,22 +1032,23 @@ async function ask(text) {
     });
     const data = await r.json();
     msg = r.ok ? { role: "assistant", text: data.reply, at: Date.now(), cards: data.cards || [], suggest: data.suggest || [] }
-               : { role: "assistant", text: data.detail || "Не получилось ответить. Отправь вопрос ещё раз.", at: Date.now(), error: true };
+               : { role: "assistant", text: data.detail || "Не получилось ответить. Спроси ещё раз.", at: Date.now(), error: true };
   } catch {
-    msg = { role: "assistant", text: "Нет связи с сервером. Отправь вопрос ещё раз.", at: Date.now(), error: true };
-  }
-  typing.remove();
-  if (cur === c) {
-    if (msg.cards) msg.cards.forEach(cardKey); // ключи нужны до показа, чтобы кнопки «На экране» находили карточки
-    $("thread").appendChild(aiNode(msg.text, msg.at, msg.cards, msg.error, msg.suggest));
-    if (!msg.error) speakReply(msg.text);
-    if (msg.cards) bumpUnseen(putOnBoard(msg.cards, true, true));
-    scrollDown();
+    msg = { role: "assistant", text: "Нет связи с сервером. Спроси ещё раз.", at: Date.now(), error: true };
   }
   c.msgs.push(msg);
   saveConvs();
   busy = false;
   updateSend();
+  if (cur !== c) return;
+  if (msg.cards) msg.cards.forEach(cardKey); // ключи нужны до показа, чтобы кнопки находили карточки
+  $("thread").appendChild(aiNode(msg.text, msg.at, msg.cards, msg.error));
+  caption(text, msg.text, msg.error);
+  followUps(msg.suggest);
+  remember(msg.cards);
+  if (!spotlight(msg.cards, true)) renderStrip();
+  stage("idle");
+  if (!msg.error) speak(msg.text);
 }
 
 function updateSend() { $("send").disabled = busy || !$("q").value.trim(); }
@@ -993,101 +1065,94 @@ $("ask").addEventListener("submit", (e) => {
   grow();
   ask(text);
 });
-$("other").addEventListener("click", () => { $("nick").value = ""; show("start"); $("nick").focus(); });
+$("other").addEventListener("click", () => { stopSpeaking(); $("nick").value = ""; show("start"); $("nick").focus(); });
 
-/* ---------- Голос: разговор с режиссёром, как с помощником в ролике ----------
-   Работает там, где страницу показывает Claude (Chrome или приложение для компьютера).
-   На обычном сервере этих возможностей пока нет — сцена с кругом не появляется, остаётся текст. */
-let dict = null, tts = null, voiceOn = false, listening = false, talked = false, heard = "", quiet = null, useRu = true;
-function setStatus(text, isBusy) { $("status-text").textContent = text; $("status").classList.toggle("busy", !!isBusy); }
+/* ---------- Голос: говоришь в круг, режиссёр отвечает вслух ----------
+   Распознавание речи и озвучка встроены в браузер: Chrome и Edge — полностью, Safari — озвучка и часто распознавание.
+   Где распознавания нет, круг подсказывает писать текстом. */
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+const synth = window.speechSynthesis || null;
+let rec = null, listening = false, voiceOn = true;
+const TOUCH = window.matchMedia("(pointer: coarse)").matches;
+const IDLE_TEXT = !SR ? "Голосом можно в Chrome. Здесь — напиши текстом" : TOUCH ? "Нажми на круг и спроси" : "Нажми на круг или пробел и спроси";
+
 function stage(mode, text) {
-  const st = $("stage");
-  st.classList.remove("listen", "think", "speak");
-  if (mode !== "idle") st.classList.add(mode);
-  $("stage-text").textContent = text || { idle: "Режиссёр на связи", listen: "Слушаю…", think: "Думаю…", speak: "Говорю…" }[mode];
-  $("stage-hint").hidden = mode !== "idle";
-  setStatus({ idle: "на связи", listen: "слушает", think: "думает", speak: "говорит" }[mode], mode !== "idle");
+  $("stage").dataset.mode = mode;
+  $("stage-text").textContent = text || { idle: IDLE_TEXT, listen: "Слушаю…", think: "Думаю…", speak: "Говорю…" }[mode];
 }
-function speakReply(text) {
-  if (!tts || !voiceOn) return;
-  tts.speak(String(text).slice(0, 2000), { language: "ru" }).catch(() => {});
-}
-function setVoiceOut(on) {
-  voiceOn = on;
-  $("voice-out").classList.toggle("active", on);
-  $("voice-out").setAttribute("aria-pressed", String(on));
-  if (!on && tts) tts.stop();
-}
-(async () => {
-  if (!window.claude || typeof window.claude.use !== "function") return;
-  const [d, t] = await Promise.all([window.claude.use("dictation"), window.claude.use("tts")]).catch(() => [null, null]);
-  if (t) {
-    tts = t;
-    setVoiceOut(true);
-    $("voice-out").hidden = false;
-    $("voice-out").addEventListener("click", () => setVoiceOut(!voiceOn));
-    t.onState(({ state }) => { if (!dict) return; if (state === "speaking") stage("speak"); else if (!listening && !busy) stage("idle"); });
-    // приветствие голосом, когда открылся разбор
-    const open0 = renderDash;
-    renderDash = function (d2) {
-      open0(d2);
-      const a = d2.analysis || {};
-      speakReply("Привет! Разбор " + d2.username.replace(/[._]/g, " ") + " готов. " + (a.summary || "") + " Спроси, что снять сегодня.");
-    };
-  }
-  if (!d) return;
-  dict = d;
-  $("stage").hidden = false;
-  document.querySelector(".chat").classList.add("voice");
+stage("idle");
 
-  // пока думает — показываем это на круге
-  const ask0 = ask;
-  ask = async function (text) {
-    stage("think");
-    try { await ask0(text); } finally { if (!listening && !$("stage").classList.contains("speak")) stage("idle"); }
-  };
+function ruVoice() {
+  const voices = synth ? synth.getVoices() : [];
+  return voices.find((v) => /^ru/i.test(v.lang) && /female|milena|алёна|alena|google/i.test(v.name)) || voices.find((v) => /^ru/i.test(v.lang)) || null;
+}
+function speak(text) {
+  if (!synth || !voiceOn || !text) return;
+  try {
+    synth.cancel();
+    const u = new SpeechSynthesisUtterance(String(text).slice(0, 700));
+    u.lang = "ru-RU";
+    const v = ruVoice();
+    if (v) u.voice = v;
+    u.onstart = () => { if (!listening) stage("speak"); };
+    u.onend = u.onerror = () => { if (!listening && !busy) stage("idle"); };
+    synth.speak(u);
+  } catch { /* озвучка не получилась — текст и так на экране */ }
+}
+function stopSpeaking() { try { if (synth) synth.cancel(); } catch { /* ничего */ } }
 
-  const live = (partial) => { $("stage-live").textContent = (heard + " " + (partial || "")).trim(); };
-  const armQuiet = (ms) => { clearTimeout(quiet); quiet = setTimeout(() => { if (listening) d.stop().catch(() => {}); }, ms); };
-  d.onPartial(({ text }) => { if (text) clearTimeout(quiet); live(text); });
-  d.onFinal(({ text }) => { heard = (heard + text).trim(); live(""); armQuiet(1600); }); // замолчал на полторы секунды — отправляем
-  d.onState(({ state, reason }) => {
-    const was = listening;
-    listening = state === "listening" || state === "starting";
-    if (listening) { talked = true; stage("listen"); if (state === "listening" && !was) armQuiet(9000); return; }
-    if (state !== "idle") return;
-    clearTimeout(quiet);
-    const text = heard.trim();
-    heard = "";
-    $("stage-live").textContent = "";
-    if (reason === "not_granted" || reason === "unavailable") {
-      if (reason === "unavailable" && useRu) { useRu = false; stage("idle", "Нажми ещё раз"); return; }
-      $("stage").hidden = true; // микрофон запрещён или недоступен — остаётся ввод текстом
-      document.querySelector(".chat").classList.remove("voice");
-      return;
+if (!synth) $("voice-out").hidden = true;
+$("voice-out").addEventListener("click", () => {
+  voiceOn = !voiceOn;
+  $("voice-out").setAttribute("aria-pressed", String(voiceOn));
+  $("voice-out").textContent = voiceOn ? "Звук: вкл" : "Звук: выкл";
+  if (!voiceOn) { stopSpeaking(); stage("idle"); }
+});
+
+function toggleTalk() {
+  if (!SR) { $("q").focus(); return; }
+  if (listening && rec) { rec.stop(); return; }
+  if (busy || !D) return;
+  stopSpeaking();
+  let finalText = "";
+  rec = new SR();
+  rec.lang = "ru-RU";
+  rec.interimResults = true;
+  rec.continuous = false;
+  rec.onresult = (e) => {
+    let interim = "";
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      const t = e.results[i][0].transcript;
+      if (e.results[i].isFinal) finalText += t; else interim += t;
     }
-    const send = talked && text && !busy;
-    talked = false;
-    if (send) ask(text); else stage("idle");
-  });
-
-  // start() должен вызываться прямо из нажатия, без ожиданий до него
-  function toggleTalk() {
-    if (listening) { d.stop().catch(() => {}); return; }
-    if (busy || !D) return;
-    heard = "";
-    if (tts) tts.stop();
-    d.start(useRu ? { language: "ru" } : undefined).catch(() => {});
-  }
-  $("orb").addEventListener("click", toggleTalk);
-  document.addEventListener("keydown", (e) => {
-    if (e.code !== "Space" || e.repeat || $("dash").classList.contains("hidden")) return;
-    const tag = (e.target && e.target.tagName) || "";
-    if (["TEXTAREA", "INPUT", "BUTTON", "SELECT", "A"].includes(tag)) return;
-    e.preventDefault();
-    toggleTalk();
-  });
-})();
+    $("said").textContent = "Ты: «" + (finalText + interim).trim() + "»";
+  };
+  rec.onerror = (e) => {
+    listening = false;
+    if (e.error === "not-allowed" || e.error === "service-not-allowed") stage("idle", "Разреши микрофон для сайта — значок слева от адреса");
+    else if (e.error === "no-speech") stage("idle", "Не расслышал. Нажми и скажи ещё раз");
+    else stage("idle", "Голос сейчас не работает — напиши текстом");
+  };
+  rec.onend = () => {
+    const wasListening = listening;
+    listening = false;
+    const text = finalText.trim();
+    if (text) ask(text);
+    else if (wasListening && $("stage").dataset.mode === "listen") stage("idle");
+  };
+  try { rec.start(); listening = true; stage("listen"); $("said").textContent = ""; }
+  catch { listening = false; stage("idle", "Голос сейчас не работает — напиши текстом"); }
+}
+$("orb").addEventListener("click", toggleTalk);
+document.addEventListener("keydown", (e) => {
+  if (e.code !== "Space" || e.repeat || $("dash").classList.contains("hidden")) return;
+  if (!$("hist").hidden || !$("log").hidden) return;
+  const tag = (e.target && e.target.tagName) || "";
+  if (["TEXTAREA", "INPUT", "BUTTON", "SELECT", "A"].includes(tag)) return;
+  e.preventDefault();
+  toggleTalk();
+});
+if (synth && synth.onvoiceschanged !== undefined) synth.onvoiceschanged = () => {};
 </script>
 </body>
 </html>
