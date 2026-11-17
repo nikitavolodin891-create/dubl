@@ -354,6 +354,22 @@
   @keyframes vring { 0% { transform: scale(.9); opacity: .35; } 100% { transform: scale(1.6); opacity: 0; } }
   @keyframes vbreathe { 50% { transform: scale(1.06); } }
   @keyframes veq { to { height: 100%; } }
+  .talk { position: relative; }
+  .vpop { position: absolute; z-index: 15; right: max(16px, min(4vw, 48px)); top: 76px; width: min(520px, calc(100% - 32px)); background: var(--card); border-radius: 22px; padding: 16px 18px; box-shadow: 0 30px 60px -24px rgba(90, 40, 50, .35); display: grid; gap: 12px; max-width: 100%; box-sizing: border-box; }
+  .vpop[hidden] { display: none; }
+  .vpop-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .vpop-row b { font-size: 14px; min-width: 52px; }
+  .vpop-opts { display: flex; gap: 6px; flex-wrap: wrap; }
+  .vpop-opts button { border: 1px solid var(--line); background: var(--card); border-radius: 999px; padding: 8px 13px; min-height: 38px; font-size: 14px; color: var(--ink); cursor: pointer; }
+  .vpop-opts button[aria-pressed="true"] { background: var(--ink); color: var(--card); border-color: var(--ink); }
+  .vpop-note { font-size: 13px; color: var(--soft); max-width: 34em; }
+  .confirm { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .confirm[hidden] { display: none; }
+  .cbar { width: 90px; height: 6px; border-radius: 999px; background: var(--bar-neutral); overflow: hidden; }
+  .cbar i { display: block; height: 100%; width: 0; background: var(--accent); }
+  .cbar i.run { width: 100%; transition: width linear; }
+  .confirm button { border: 1px solid var(--line); background: var(--card); border-radius: 999px; padding: 8px 14px; min-height: 38px; font-size: 14px; color: var(--ink); cursor: pointer; }
+  .confirm .c-main { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
   .vstate { font-size: 13px; letter-spacing: .06em; text-transform: uppercase; color: var(--soft); }
   .said { font-size: 17px; color: var(--soft); min-height: 1.5em; overflow-wrap: anywhere; }
   .reply { font-size: clamp(24px, 3vw, 38px); line-height: 1.2; font-weight: 800; letter-spacing: -.03em; max-width: 19em; white-space: pre-line; overflow-wrap: anywhere; }
@@ -441,12 +457,18 @@
       <div class="talk-actions">
         <span class="who" id="who"></span>
         <button class="ghost" type="button" id="voice-out" aria-pressed="true">Звук: вкл</button>
+        <button class="ghost" type="button" id="voice-set" aria-expanded="false" aria-controls="voice-pop">Голос</button>
         <button class="ghost" type="button" id="open-log">Переписка</button>
         <button class="ghost" type="button" id="open-hist">История</button>
         <button class="ghost" type="button" id="new-chat">Новый разговор</button>
         <button class="ghost" type="button" id="other">Другой аккаунт</button>
       </div>
     </header>
+    <div class="vpop" id="voice-pop" hidden>
+      <div class="vpop-row"><b>Голос</b><div class="vpop-opts" id="voice-opts"></div></div>
+      <div class="vpop-row"><b>Темп</b><div class="vpop-opts" id="rate-opts"></div></div>
+      <p class="vpop-note" id="voice-note"></p>
+    </div>
 
     <div class="talk-main">
       <div class="talk-left">
@@ -459,6 +481,12 @@
         </div>
         <div class="vstate" id="stage-text">Нажми на круг и спроси</div>
         <p class="said" id="said"></p>
+        <div class="confirm" id="confirm" hidden>
+          <span class="cbar" aria-hidden="true"><i id="cbar"></i></span>
+          <button type="button" class="c-main" id="c-send">Отправить</button>
+          <button type="button" id="c-edit">Исправить</button>
+          <button type="button" id="c-cancel">Отмена</button>
+        </div>
         <p class="reply" id="reply" aria-live="polite"></p>
         <div class="follow" id="follow"></div>
         <form class="composer" id="ask">
@@ -1088,16 +1116,20 @@ stage("idle");
 
 function ruVoice() {
   const voices = synth ? synth.getVoices() : [];
+  const picked = voices.find((v) => v.name === vSet.web);
+  if (picked) return picked;
   return voices.find((v) => /^ru/i.test(v.lang) && /female|milena|алёна|alena|google/i.test(v.name)) || voices.find((v) => /^ru/i.test(v.lang)) || null;
 }
 function speak(text) {
   if (!voiceOn || !text) return;
-  if (cTts) { cTts.speak(String(text).slice(0, 2000), { language: "ru" }).catch(() => {}); return; }
+  text = speakable(text);
+  if (cTts) { cTts.speak(text, { language: "ru", voice: vSet.voice, rate: vSet.rate }).catch(() => {}); return; }
   if (!synth) return;
   try {
     synth.cancel();
     const u = new SpeechSynthesisUtterance(String(text).slice(0, 700));
     u.lang = "ru-RU";
+    u.rate = vSet.rate;
     const v = ruVoice();
     if (v) u.voice = v;
     u.onstart = () => { if (!listening) stage("speak"); };
@@ -1153,7 +1185,7 @@ function toggleTalk() {
     const wasListening = listening;
     listening = false;
     const text = finalText.trim();
-    if (text) ask(text);
+    if (text) confirmHeard(text);
     else if (wasListening && $("stage").dataset.mode === "listen") stage("idle");
   };
   try { rec.start(); listening = true; stage("listen"); $("said").textContent = ""; }
@@ -1195,11 +1227,86 @@ if (synth && synth.onvoiceschanged !== undefined) synth.onvoiceschanged = () => 
       const text = cHeard.trim();
       cHeard = "";
       if (reason === "not_granted" || reason === "unavailable") { cDict = null; stage("idle"); return; }
-      if (text && !busy) ask(text); else stage("idle");
+      if (text && !busy) confirmHeard(text); else stage("idle");
     });
   }
   stage("idle");
 })();
+
+/* ---------- Вслух — только суть: 1–2 первые фразы, остальное на экране ---------- */
+function speakable(text) {
+  const t = String(text || "").replace(/\s+/g, " ").trim();
+  const parts = t.match(/[^.!?…]+[.!?…]+["»]?/g) || [t];
+  let out = "", n = 0;
+  for (const s of parts) {
+    if (out && (out + s).length > 220) break;
+    out += s;
+    if (++n >= 2 || out.length > 120) break;
+  }
+  return (out || t).trim().slice(0, 300);
+}
+
+/* ---------- Что услышал: показываем и ждём 2 секунды, можно поправить ---------- */
+let pendTimer = null;
+function closeConfirm() { clearTimeout(pendTimer); pendTimer = null; $("confirm").hidden = true; }
+function confirmHeard(text) {
+  closeConfirm();
+  $("said").textContent = "Ты: «" + text + "»";
+  $("confirm").hidden = false;
+  stage("idle", "Отправлю через 2 секунды");
+  const bar = $("cbar");
+  bar.classList.remove("run"); bar.style.transitionDuration = "0ms"; void bar.offsetWidth;
+  bar.style.transitionDuration = "2200ms"; bar.classList.add("run");
+  const send = () => { closeConfirm(); ask(text); };
+  $("c-send").onclick = send;
+  $("c-edit").onclick = () => { closeConfirm(); stage("idle"); $("q").value = text; grow(); updateSend(); $("q").focus(); };
+  $("c-cancel").onclick = () => { closeConfirm(); $("said").textContent = ""; stage("idle"); };
+  pendTimer = setTimeout(send, 2200);
+}
+
+/* ---------- Настройки голоса: какой голос и как быстро говорит ---------- */
+const vSet = (() => {
+  try { return Object.assign({ voice: "airy", rate: 1.1, web: "" }, JSON.parse(localStorage.getItem("dubl-voice") || "{}")); }
+  catch { return { voice: "airy", rate: 1.1, web: "" }; }
+})();
+function saveVSet() { try { localStorage.setItem("dubl-voice", JSON.stringify(vSet)); } catch { /* без сохранения */ } }
+const CLAUDE_VOICES = [["airy", "Лёгкий"], ["buttery", "Мягкий"], ["rounded", "Тёплый"], ["glassy", "Чёткий"]];
+const RATES = [[0.95, "Спокойно"], [1.1, "Обычно"], [1.25, "Бодро"], [1.4, "Быстро"]];
+function renderVoicePop() {
+  const opts = $("voice-opts");
+  opts.replaceChildren();
+  let list;
+  if (cTts) list = CLAUDE_VOICES;
+  else list = (synth ? synth.getVoices() : []).filter((v) => /^ru/i.test(v.lang)).slice(0, 6).map((v) => [v.name, v.name.replace(/Microsoft |Google |\(.*\)/g, "").trim()]);
+  if (!list.length) opts.appendChild(el("span", "vpop-note", "В этом браузере нет русских голосов на выбор"));
+  list.forEach(([id, name]) => {
+    const b = el("button", "", name);
+    b.type = "button";
+    const cur = cTts ? vSet.voice : vSet.web;
+    b.setAttribute("aria-pressed", String(cur === id));
+    b.addEventListener("click", () => { if (cTts) vSet.voice = id; else vSet.web = id; saveVSet(); renderVoicePop(); speak("Привет! Так я буду звучать."); });
+    opts.appendChild(b);
+  });
+  const rates = $("rate-opts");
+  rates.replaceChildren();
+  RATES.forEach(([r, name]) => {
+    const b = el("button", "", name);
+    b.type = "button";
+    b.setAttribute("aria-pressed", String(Math.abs(vSet.rate - r) < 0.01));
+    b.addEventListener("click", () => { vSet.rate = r; saveVSet(); renderVoicePop(); speak("Привет! Так я буду звучать."); });
+    rates.appendChild(b);
+  });
+  $("voice-note").textContent = cTts
+    ? "Голоса Claude созданы для английского, по-русски они могут звучать похоже. Выбери тот, что приятнее."
+    : "Голоса встроены в браузер. В Chrome лучше всего звучит «Google русский».";
+}
+$("voice-set").addEventListener("click", () => {
+  const open = $("voice-pop").hidden;
+  $("voice-pop").hidden = !open;
+  $("voice-set").setAttribute("aria-expanded", String(open));
+  if (open) renderVoicePop();
+});
+if (!synth && !window.claude) $("voice-set").hidden = true;
 </script>
 </body>
 </html>
