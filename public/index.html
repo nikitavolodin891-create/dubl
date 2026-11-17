@@ -1073,12 +1073,16 @@ $("other").addEventListener("click", () => { stopSpeaking(); $("nick").value = "
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 const synth = window.speechSynthesis || null;
 let rec = null, listening = false, voiceOn = true;
+let cDict = null, cTts = null, cHeard = "", cQuiet = null; // голос Claude, если страница открыта внутри Claude
 const TOUCH = window.matchMedia("(pointer: coarse)").matches;
-const IDLE_TEXT = !SR ? "Голосом можно в Chrome. Здесь — напиши текстом" : TOUCH ? "Нажми на круг и спроси" : "Нажми на круг или пробел и спроси";
+function idleText() {
+  if (!cDict && !SR) return "Голосом можно в Chrome. Здесь — напиши текстом";
+  return TOUCH ? "Нажми на круг и спроси" : "Нажми на круг или пробел и спроси";
+}
 
 function stage(mode, text) {
   $("stage").dataset.mode = mode;
-  $("stage-text").textContent = text || { idle: IDLE_TEXT, listen: "Слушаю…", think: "Думаю…", speak: "Говорю…" }[mode];
+  $("stage-text").textContent = text || { idle: idleText(), listen: "Слушаю…", think: "Думаю…", speak: "Говорю…" }[mode];
 }
 stage("idle");
 
@@ -1087,7 +1091,9 @@ function ruVoice() {
   return voices.find((v) => /^ru/i.test(v.lang) && /female|milena|алёна|alena|google/i.test(v.name)) || voices.find((v) => /^ru/i.test(v.lang)) || null;
 }
 function speak(text) {
-  if (!synth || !voiceOn || !text) return;
+  if (!voiceOn || !text) return;
+  if (cTts) { cTts.speak(String(text).slice(0, 2000), { language: "ru" }).catch(() => {}); return; }
+  if (!synth) return;
   try {
     synth.cancel();
     const u = new SpeechSynthesisUtterance(String(text).slice(0, 700));
@@ -1099,7 +1105,7 @@ function speak(text) {
     synth.speak(u);
   } catch { /* озвучка не получилась — текст и так на экране */ }
 }
-function stopSpeaking() { try { if (synth) synth.cancel(); } catch { /* ничего */ } }
+function stopSpeaking() { try { if (cTts) cTts.stop(); else if (synth) synth.cancel(); } catch { /* ничего */ } }
 
 if (!synth) $("voice-out").hidden = true;
 $("voice-out").addEventListener("click", () => {
@@ -1110,6 +1116,16 @@ $("voice-out").addEventListener("click", () => {
 });
 
 function toggleTalk() {
+  if (cDict) {
+    // start() вызываем прямо из нажатия, без ожиданий до него
+    if (listening) { cDict.stop().catch(() => {}); return; }
+    if (busy || !D) return;
+    stopSpeaking();
+    cHeard = "";
+    $("said").textContent = "";
+    cDict.start({ language: "ru" }).catch(() => {});
+    return;
+  }
   if (!SR) { $("q").focus(); return; }
   if (listening && rec) { rec.stop(); return; }
   if (busy || !D) return;
@@ -1153,6 +1169,37 @@ document.addEventListener("keydown", (e) => {
   toggleTalk();
 });
 if (synth && synth.onvoiceschanged !== undefined) synth.onvoiceschanged = () => {};
+
+// Внутри Claude браузерный микрофон закрыт — там слушаем и говорим голосом самого Claude
+(async () => {
+  if (!window.claude || typeof window.claude.use !== "function") return;
+  const [d, t] = await Promise.all([window.claude.use("dictation"), window.claude.use("tts")]).catch(() => [null, null]);
+  if (t) {
+    cTts = t;
+    $("voice-out").hidden = false;
+    t.onState(({ state }) => { if (state === "speaking") stage("speak"); else if (!listening && !busy) stage("idle"); });
+  }
+  if (d) {
+    cDict = d;
+    const live = (partial) => { $("said").textContent = "Ты: «" + (cHeard + " " + (partial || "")).trim() + "»"; };
+    d.onPartial(({ text }) => { if (text) clearTimeout(cQuiet); live(text); });
+    d.onFinal(({ text }) => { // замолчал на полторы секунды — отправляем
+      cHeard = (cHeard + " " + text).trim(); live("");
+      clearTimeout(cQuiet); cQuiet = setTimeout(() => { if (listening) d.stop().catch(() => {}); }, 1600);
+    });
+    d.onState(({ state, reason }) => {
+      listening = state === "listening" || state === "starting";
+      if (listening) { stage("listen"); return; }
+      if (state !== "idle") return;
+      clearTimeout(cQuiet);
+      const text = cHeard.trim();
+      cHeard = "";
+      if (reason === "not_granted" || reason === "unavailable") { cDict = null; stage("idle"); return; }
+      if (text && !busy) ask(text); else stage("idle");
+    });
+  }
+  stage("idle");
+})();
 </script>
 </body>
 </html>
